@@ -75,19 +75,9 @@ async function boot() {
 
   onAuthChange(async (user) => {
     if (user) {
-      localStorage.removeItem('flowlane_skipAuth');
       await handleSignIn(user);
     } else {
-      const skipAuth = localStorage.getItem('flowlane_skipAuth');
-      if (skipAuth) {
-        configureStorage({ isPremium: false, uid: 'local' });
-        setUserAvatar(null);
-        setTierBadge('free');
-        await loadProjects();
-        show('app');
-      } else {
-        handleSignOut();
-      }
+      handleSignOut();
     }
   });
 }
@@ -97,7 +87,7 @@ async function boot() {
 // ══════════════════════════════════════════════════════════════════════════════
 
 function show(screenId) {
-  ['loading-screen', 'auth-screen', 'app'].forEach((id) => {
+  ['loading-screen', 'auth-screen', 'premium-wall', 'app'].forEach((id) => {
     document.getElementById(id)?.classList.toggle('hidden', id !== screenId);
   });
 }
@@ -109,9 +99,6 @@ function show(screenId) {
 async function handleSignIn(user) {
   _state.user = user;
 
-  // Move any anonymous (skip-auth) local data to the user-namespaced key
-  await adoptAnonymousData(user.uid);
-
   // Upsert user in Firestore (no-op if offline / firebase not configured)
   try {
     await upsertUser(user.uid, {
@@ -121,64 +108,76 @@ async function handleSignIn(user) {
     });
   } catch (_) { /* Firebase not yet configured — ok */ }
 
-  // Listen for subscription status changes in Firestore
+  setUserAvatar(user);
+
+  // Stay on loading screen while we determine the subscription tier
+  show('loading-screen');
+
+  let tierResolved = false;
+
+  // Fallback: if Firestore doesn't respond in 8s, show premium wall
+  const tierTimeout = setTimeout(() => {
+    if (!tierResolved) {
+      tierResolved = true;
+      show('premium-wall');
+    }
+  }, 8000);
+
+  // Listen for subscription status — drives which screen is shown
   _state.unsubUser?.();
   try {
     _state.unsubUser = listenUser(user.uid, async (userData) => {
       const storedTier = userData?.tier ?? 'free';
       const endsAt     = userData?.subscriptionEndsAt ?? null;
 
-      // If Firestore says 'free' but the subscription period hasn't expired yet,
-      // honour the paid period the user already paid for.
+      // Honour paid period even if Firestore tier is already set back to 'free'
       let effectiveTier = storedTier;
       if (storedTier === 'free' && endsAt) {
         const expiryDate = endsAt?.toDate?.() ?? new Date(endsAt);
-        if (expiryDate > new Date()) {
-          effectiveTier = 'premium';
-        }
+        if (expiryDate > new Date()) effectiveTier = 'premium';
       }
 
       const prevTier = _state.tier;
 
-      if (effectiveTier !== prevTier) {
-        if (prevTier === 'premium' && effectiveTier === 'free') {
-          _state.tier = 'free';
-          showDowngradeModal();
+      if (!tierResolved) {
+        // First callback — determine initial screen
+        tierResolved = true;
+        clearTimeout(tierTimeout);
+        _state.tier = effectiveTier;
+        setTierBadge(effectiveTier);
+
+        if (effectiveTier === 'premium') {
+          configureStorage({ isPremium: true, uid: user.uid });
+          await loadProjects();
+          show('app');
+          checkPendingInvites(user).catch(() => {});
         } else {
-          // free → premium: migrate any local data to Firestore first
-          if (effectiveTier === 'premium') {
-            try {
-              showToast('Syncing your data to the cloud...', 'info');
-              await migrateLocalToCloud(user.uid);
-            } catch (migErr) {
-              console.warn('[migrate]', migErr);
-            }
-          }
-
-          _state.tier = effectiveTier;
-          _state.isDowngraded = false;
-          configureStorage({ isPremium: effectiveTier === 'premium', uid: user.uid });
-          setTierBadge(effectiveTier);
-
-          if (effectiveTier === 'premium') {
-            await loadProjects();
-          }
+          // Not premium — show the premium wall
+          show('premium-wall');
         }
-      } else if (effectiveTier === 'free' && !_state.isDowngraded) {
-        await checkAndEnterDowngradedMode(user.uid);
+      } else if (effectiveTier !== prevTier) {
+        // Tier changed while app is running
+        if (prevTier === 'premium' && effectiveTier === 'free') {
+          // Subscription lapsed — move back to premium wall
+          _state.tier = 'free';
+          setTierBadge('free');
+          stopListening();
+          show('premium-wall');
+        } else if (effectiveTier === 'premium') {
+          // Upgraded from premium wall — enter the app
+          _state.tier = 'premium';
+          _state.isDowngraded = false;
+          configureStorage({ isPremium: true, uid: user.uid });
+          setTierBadge('premium');
+          await loadProjects();
+          show('app');
+          checkPendingInvites(user).catch(() => {});
+        }
       }
     });
-  } catch (_) { /* offline */ }
-
-  configureStorage({ isPremium: false, uid: user.uid });
-  setUserAvatar(user);
-  setTierBadge(_state.tier);
-
-  await loadProjects();
-  show('app');
-
-  // Check for pending invites after app is visible — non-blocking
-  checkPendingInvites(user).catch(() => {});
+  } catch (_) {
+    // Firestore not configured — fall through to premium wall after timeout
+  }
 }
 
 function handleSignOut() {
@@ -186,7 +185,10 @@ function handleSignOut() {
   _state.tier = 'free';
   _state.projects = [];
   _state.currentProjectId = null;
+  _state.isDowngraded = false;
 
+  _state.unsubUser?.();
+  _state.unsubUser = null;
   stopListening();
   configureStorage({ isPremium: false, uid: null });
   setUserAvatar(null);
@@ -746,13 +748,13 @@ function wireStaticButtons() {
     }
   });
 
-  document.getElementById('skip-auth-btn')?.addEventListener('click', async () => {
-    localStorage.setItem('flowlane_skipAuth', 'true');
-    configureStorage({ isPremium: false, uid: 'local' });
-    setUserAvatar(null);
-    setTierBadge('free');
-    await loadProjects();
-    show('app');
+  // ── Premium wall ─────────────────────────────────────────────────────────
+  document.getElementById('premium-wall-subscribe-btn')?.addEventListener('click', () => {
+    startCheckout(_state.user?.uid);
+  });
+
+  document.getElementById('premium-wall-sign-out-btn')?.addEventListener('click', async () => {
+    await signOut();
   });
 
   // ── Header ───────────────────────────────────────────────────────────────
@@ -829,12 +831,6 @@ function wireStaticButtons() {
     await populateCollaborators(_state.currentProjectId);
   });
 
-  // ── Upgrade button ──────────────────────────────────────────────────────
-  document.getElementById('upgrade-btn')?.addEventListener('click', () => {
-    document.getElementById('user-dropdown')?.classList.add('hidden');
-    openModal('upgrade');
-  });
-
   // ── Manage Billing ──────────────────────────────────────────────────────
   document.getElementById('manage-billing-btn')?.addEventListener('click', () => {
     document.getElementById('user-dropdown')?.classList.add('hidden');
@@ -844,20 +840,7 @@ function wireStaticButtons() {
   // ── Sign out ────────────────────────────────────────────────────────────
   document.getElementById('sign-out-btn')?.addEventListener('click', async () => {
     document.getElementById('user-dropdown')?.classList.add('hidden');
-    localStorage.removeItem('flowlane_skipAuth');
     await signOut();
-  });
-
-  // ── Sign in from guest mode ─────────────────────────────────────────────
-  document.getElementById('sign-in-menu-btn')?.addEventListener('click', async () => {
-    document.getElementById('user-dropdown')?.classList.add('hidden');
-    localStorage.removeItem('flowlane_skipAuth');
-    try {
-      await signInWithGoogle();
-    } catch (err) {
-      console.error('[SignIn from menu]', err);
-      handleSignOut();
-    }
   });
 
   // ── Settings ────────────────────────────────────────────────────────────

@@ -154,13 +154,11 @@ export function setTierBadge(tier) {
   if (tier === 'premium') {
     badge.textContent = '\u26A1 Premium';
     badge.classList.add('premium');
-    document.getElementById('upgrade-btn')?.style.setProperty('display', 'none');
     document.getElementById('manage-billing-btn')?.style.setProperty('display', '');
     document.getElementById('invite-btn')?.style.setProperty('display', '');
   } else {
     badge.textContent = 'Free';
     badge.classList.remove('premium');
-    document.getElementById('upgrade-btn')?.style.removeProperty('display');
     document.getElementById('manage-billing-btn')?.style.setProperty('display', 'none');
   }
 }
