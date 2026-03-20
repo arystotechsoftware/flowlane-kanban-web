@@ -556,8 +556,8 @@ input, textarea, select, button {
 /* ── Project Selector ── */
 .project-selector {
   position: relative;
-  min-width: 320px;
-  max-width: 700px;
+  min-width: 480px;
+  max-width: 1050px;
 }
 
 .project-btn {
@@ -574,13 +574,17 @@ input, textarea, select, button {
   cursor: pointer;
   transition: var(--trans);
   width: 100%;
+  min-width: 0;
 }
 
 .project-btn:hover { background: var(--bg-hover); }
 .project-btn span {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: left;
 }
 .project-btn svg { flex-shrink: 0; color: var(--text-secondary); }
 
@@ -3554,8 +3558,8 @@ body.light .locked-overlay {
   }
 
   .project-selector {
-    min-width: 320px;
-    max-width: 700px;
+    min-width: 480px;
+    max-width: 1050px;
   }
 }
 
