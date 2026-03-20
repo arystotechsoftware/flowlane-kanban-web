@@ -200,7 +200,7 @@ input, textarea, select, button {
 
 .auth-container {
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
   padding: 24px;
 }
 
@@ -242,11 +242,71 @@ input, textarea, select, button {
 }
 
 .auth-tagline {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-secondary);
   text-align: center;
   line-height: 1.6;
-  margin-bottom: 28px;
+  margin-bottom: 0;
+  max-width: 320px;
+}
+
+/* Premium badge shown on auth + premium-wall screens */
+.auth-premium-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, var(--accent-muted), rgba(250,204,21,0.12));
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-full);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Feature checklist on auth + premium-wall screens */
+.auth-premium-features {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin: 20px 0 24px;
+  padding: 16px 20px;
+  background: var(--accent-muted);
+  border: 1px solid rgba(99,102,241,0.2);
+  border-radius: var(--radius-lg);
+}
+
+.auth-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.auth-feature-item svg {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+/* Subscribe button on premium wall */
+.auth-subscribe-btn {
+  width: 100%;
+  justify-content: center;
+  gap: 8px;
+  font-size: 15px;
+  padding: 13px 20px;
+}
+
+/* Sign out link on premium wall */
+.auth-signout-btn {
+  width: 100%;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .auth-actions {
