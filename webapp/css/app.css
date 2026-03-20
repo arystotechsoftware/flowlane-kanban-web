@@ -820,6 +820,8 @@ input, textarea, select, button {
 
 .user-dropdown {
   min-width: 220px;
+  right: 0;
+  left: auto;
 }
 
 .user-dropdown-header,
@@ -1532,7 +1534,7 @@ input, textarea, select, button {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.modal-sm { max-width: 460px; }
+.modal-sm { max-width: 460px; padding: 24px; }
 .modal-card { max-width: 880px; }
 
 .modal-header {
@@ -1545,9 +1547,10 @@ input, textarea, select, button {
 }
 
 .modal-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
   color: var(--text-primary);
+  margin-bottom: 20px;
 }
 
 .modal-subtitle {
@@ -2822,6 +2825,13 @@ textarea.form-input {
   padding-bottom: 18px;
   margin-bottom: 18px;
   border-bottom: 1px solid var(--border-light);
+}
+
+.settings-section h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 10px;
 }
 
 .settings-section:last-child { border-bottom: none; margin-bottom: 0; }
