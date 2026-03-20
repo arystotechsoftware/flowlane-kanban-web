@@ -569,8 +569,8 @@ input, textarea, select, button {
   font-weight: 500;
   cursor: pointer;
   transition: var(--trans);
-  max-width: 900px;
-  min-width: 640px;
+  max-width: 700px;
+  min-width: 320px;
 }
 
 .project-btn:hover { background: var(--bg-hover); }
@@ -620,7 +620,8 @@ input, textarea, select, button {
 }
 
 #project-dropdown {
-  min-width: 640px;
+  width: 100%;
+  min-width: unset;
 }
 
 .project-list {
@@ -3550,8 +3551,8 @@ body.light .locked-overlay {
   }
 
   .project-btn {
-    min-width: 640px;
-    max-width: 900px;
+    min-width: 320px;
+    max-width: 700px;
   }
 }
 
