@@ -464,7 +464,7 @@ input, textarea, select, button {
   align-items: center;
   gap: 12px;
   min-width: 0;
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .header-logo {
@@ -569,8 +569,8 @@ input, textarea, select, button {
   font-weight: 500;
   cursor: pointer;
   transition: var(--trans);
-  max-width: 500px;
-  min-width: 160px;
+  max-width: 700px;
+  min-width: 320px;
 }
 
 .project-btn:hover { background: var(--bg-hover); }
@@ -3522,7 +3522,7 @@ body.light .locked-overlay {
   }
 
   .project-btn {
-    max-width: 300px;
+    max-width: 600px;
   }
 
   /* Modal - not full screen but padded less */
@@ -3550,8 +3550,8 @@ body.light .locked-overlay {
   }
 
   .project-btn {
-    min-width: 200px;
-    max-width: 500px;
+    min-width: 320px;
+    max-width: 700px;
   }
 }
 
