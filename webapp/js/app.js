@@ -937,8 +937,33 @@ function wireStaticButtons() {
 
   // ── Add Column ──────────────────────────────────────────────────────────
 
-  document.getElementById('add-column-btn')?.addEventListener('click', () => {
-    openModal('column');
+  // ── Add Column (inline in Settings modal) ──────────────────────────────
+  async function addColumnFromSettings() {
+    const nameInput = document.getElementById('new-column-name');
+    const name = nameInput?.value.trim();
+    if (!name) { showToast('Column name is required', 'warning'); nameInput?.focus(); return; }
+
+    const projectId = window._currentProjectId;
+    const board     = document.getElementById('board');
+    const order = board?.classList.contains('board--swimlane')
+      ? board.querySelectorAll('.sl-col-header').length
+      : board?.querySelectorAll('.column').length ?? 0;
+
+    try {
+      await createColumn(projectId, { name, color: '#7d8590', order });
+      if (nameInput) nameInput.value = '';
+      await loadCurrentBoard();
+      showToast(`Column "${name}" added`, 'success');
+    } catch (err) {
+      showToast('Failed to add column', 'error');
+      console.error('[addColumn settings]', err);
+    }
+  }
+
+  document.getElementById('add-column-btn')?.addEventListener('click', addColumnFromSettings);
+
+  document.getElementById('new-column-name')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addColumnFromSettings(); }
   });
 
   document.getElementById('add-column-inline-btn')?.addEventListener('click', () => {
