@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1a1a2e" />
+  <meta name="description" content="FlowLane - Personal Kanban board for managing tasks and projects with real-time collaboration." />
+  <meta name="author" content="FlowLane" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="FlowLane - Personal Kanban Board" />
+  <meta property="og:description" content="Organize your work with a beautiful, real-time Kanban board. Free tier available." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://app.flowlanekanban.com" />
+  <meta property="og:image" content="https://app.flowlanekanban.com/icons/icon-180.png" />
+  <meta property="og:site_name" content="FlowLane" />
+
+  <title>FlowLane - Personal Kanban Board</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="./icons/icon-16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png" />
+
+  <!-- Quill Snow CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" />
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="./css/app.css" />
+
+  <!-- Quill (no ESM) -->
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+
+  <!-- DOMPurify -->
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.5/dist/purify.min.js"></script>
+
+  <!-- Import Map for ES modules -->
+  <script type="importmap">
+  {
+    "imports": {
+      "firebase/app": "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js",
+      "firebase/auth": "https://www.gstatic.com/firebasejs/11.7.1/firebase-auth.js",
+      "firebase/firestore": "https://www.gstatic.com/firebasejs/11.7.1/firebase-firestore.js",
+      "firebase/storage": "https://www.gstatic.com/firebasejs/11.7.1/firebase-storage.js",
+      "sortablejs": "https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/modular/sortable.esm.js"
+    }
+  }
+  </script>
+</head>
+<body>
+
+  <!-- ========================================================= -->
+  <!-- SCREEN 1 : LOADING                                        -->
+  <!-- ========================================================= -->
+  <div id="loading-screen" class="screen">
+    <div class="loading-container">
+      <div class="loading-logo">
+        <svg class="logo-icon" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="8" width="10" height="32" rx="3" fill="#6c63ff"/>
+          <rect x="19" y="4" width="10" height="24" rx="3" fill="#48dbfb"/>
+          <rect x="34" y="12" width="10" height="28" rx="3" fill="#ff6b6b"/>
+        </svg>
+        <span class="loading-brand">FlowLane</span>
+      </div>
+      <div class="spinner"></div>
+      <p class="loading-text">Loading your workspace&hellip;</p>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- SCREEN 2 : AUTH                                            -->
+  <!-- ========================================================= -->
+  <div id="auth-screen" class="screen hidden">
+    <div class="auth-container">
+      <div class="auth-logo">
+        <svg class="logo-icon" width="56" height="56" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="8" width="10" height="32" rx="3" fill="#6c63ff"/>
+          <rect x="19" y="4" width="10" height="24" rx="3" fill="#48dbfb"/>
+          <rect x="34" y="12" width="10" height="28" rx="3" fill="#ff6b6b"/>
+        </svg>
+        <h1 class="auth-brand">FlowLane</h1>
+        <p class="auth-tagline">Personal Kanban for focused work</p>
+      </div>
+
+      <div class="auth-actions">
+        <button id="google-sign-in-btn" class="btn btn-primary btn-google" type="button">
+          <svg class="google-icon" width="20" height="20" viewBox="0 0 48 48">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 0 1 0-9.18l-7.98-6.19a24.0 24.0 0 0 0 0 21.56l7.98-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          </svg>
+          Sign in with Google
+        </button>
+
+        <div class="auth-divider"><span>or</span></div>
+
+        <button id="skip-auth-btn" class="btn btn-ghost" type="button">
+          Continue without sign-in
+          <span class="auth-hint">Free tier &middot; 3 projects &middot; local storage</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- SCREEN 3 : MAIN APP                                       -->
+  <!-- ========================================================= -->
+  <div id="app" class="screen hidden">
+
+    <!-- ── MOBILE SIDEBAR OVERLAY ── -->
+    <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+    <!-- ── HEADER ── -->
+    <header class="app-header">
+      <!-- Hamburger (mobile) -->
+      <button id="hamburger-btn" class="btn-icon hamburger-btn" type="button" aria-label="Menu">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+
+      <!-- Logo -->
+      <div class="header-logo">
+        <svg class="logo-icon" width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="8" width="10" height="32" rx="3" fill="#6c63ff"/>
+          <rect x="19" y="4" width="10" height="24" rx="3" fill="#48dbfb"/>
+          <rect x="34" y="12" width="10" height="28" rx="3" fill="#ff6b6b"/>
+        </svg>
+        <span class="brand-name">FlowLane</span>
+      </div>
+
+      <!-- Project Selector -->
+      <div class="project-selector">
+        <button id="project-btn" class="project-btn" type="button">
+          <span id="project-btn-label">Select Project</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div id="project-dropdown" class="dropdown hidden">
+          <div class="dropdown-header">
+            <span>Projects</span>
+          </div>
+          <ul id="project-list" class="dropdown-list"></ul>
+          <div class="dropdown-footer">
+            <button id="new-project-btn" class="btn btn-sm btn-primary" type="button">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              New Project
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="search-bar">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="search-input" type="text" placeholder="Search cards&hellip;" autocomplete="off" />
+      </div>
+
+      <!-- Header Actions -->
+      <div class="header-actions">
+        <!-- Swimlane Toggle -->
+        <button id="swimlane-toggle-btn" class="btn-icon" type="button" aria-label="Toggle swimlanes" title="Toggle swimlanes">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        </button>
+
+        <!-- Theme Toggles -->
+        <button id="theme-dark-btn" class="btn-icon active" type="button" aria-label="Dark theme" title="Dark theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
+        </button>
+        <button id="theme-light-btn" class="btn-icon" type="button" aria-label="Light theme" title="Light theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+
+        <!-- Invite -->
+        <button id="invite-btn" class="btn-icon hidden" type="button" aria-label="Invite collaborators" title="Invite collaborators">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        </button>
+
+        <!-- Upgrade -->
+        <button id="upgrade-btn" class="btn btn-upgrade" type="button">Upgrade</button>
+
+        <!-- Presence Bar -->
+        <div id="presence-bar" class="presence-bar"></div>
+
+        <!-- User Menu -->
+        <div class="user-menu">
+          <button id="user-btn" class="user-btn" type="button" aria-label="User menu">
+            <img id="user-avatar" class="user-avatar hidden" alt="User avatar" />
+            <span id="user-avatar-fallback" class="user-avatar-fallback">?</span>
+          </button>
+          <div id="user-dropdown" class="dropdown user-dropdown hidden">
+            <div class="user-dropdown-header">
+              <img id="user-avatar-dropdown" class="user-avatar-sm hidden" alt="" />
+              <div class="user-info">
+                <span id="user-display-name" class="user-display-name">Guest</span>
+                <span id="user-email-display" class="user-email-display"></span>
+              </div>
+              <span id="tier-badge" class="tier-badge">FREE</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <button id="settings-btn" class="dropdown-item" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1.08 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1.08z"/></svg>
+              Settings
+            </button>
+            <button id="manage-billing-btn" class="dropdown-item hidden" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              Manage Billing
+            </button>
+            <div class="dropdown-divider"></div>
+            <button id="sign-in-menu-btn" class="dropdown-item hidden" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+              Sign In
+            </button>
+            <button id="sign-out-btn" class="dropdown-item hidden" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── FILTER BAR ── -->
+    <div id="board-filter-bar" class="board-filter-bar hidden"></div>
+
+    <!-- ── BOARD ── -->
+    <main id="board" class="board-wrapper"></main>
+
+    <!-- ── TOAST CONTAINER ── -->
+    <div id="toast-container" class="toast-container"></div>
+
+  </div><!-- /app -->
+
+
+  <!-- ========================================================= -->
+  <!-- MODALS                                                     -->
+  <!-- ========================================================= -->
+
+  <!-- ── CARD MODAL ── -->
+  <div id="card-modal" class="modal-overlay hidden" data-modal="card">
+    <div class="modal modal-card">
+      <!-- Cover area -->
+      <div id="card-cover-area" class="card-cover-area"></div>
+
+      <!-- Close -->
+      <button class="modal-close-btn" data-close="card" type="button" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+
+      <div class="modal-card-body">
+        <!-- Left column -->
+        <div class="card-main">
+          <!-- Key -->
+          <span id="card-key-display" class="card-key-badge"></span>
+
+          <!-- Title -->
+          <textarea id="card-title-input" class="card-title-input" placeholder="Card title&hellip;" rows="1"></textarea>
+
+          <!-- Priority bar -->
+          <div id="card-priority-bar" class="card-priority-bar">
+            <label for="card-priority-select">Priority</label>
+            <select id="card-priority-select">
+              <option value="">None</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+
+          <!-- Rich text editor -->
+          <div class="card-description-section">
+            <h4>Description</h4>
+            <div id="quill-editor" class="quill-editor"></div>
+          </div>
+
+          <!-- Labels -->
+          <div class="card-section">
+            <h4>Labels</h4>
+            <div id="card-labels-list" class="card-labels-list"></div>
+            <div class="label-add-row">
+              <input id="label-input" type="text" placeholder="Label text&hellip;" maxlength="30" />
+              <div id="label-color-picker" class="color-picker-dots">
+                <button class="color-dot" data-color="#6c63ff" style="background:#6c63ff" type="button" aria-label="Purple"></button>
+                <button class="color-dot" data-color="#48dbfb" style="background:#48dbfb" type="button" aria-label="Cyan"></button>
+                <button class="color-dot" data-color="#ff6b6b" style="background:#ff6b6b" type="button" aria-label="Red"></button>
+                <button class="color-dot" data-color="#feca57" style="background:#feca57" type="button" aria-label="Yellow"></button>
+                <button class="color-dot" data-color="#1dd1a1" style="background:#1dd1a1" type="button" aria-label="Green"></button>
+                <button class="color-dot" data-color="#ff9ff3" style="background:#ff9ff3" type="button" aria-label="Pink"></button>
+                <button class="color-dot" data-color="#f368e0" style="background:#f368e0" type="button" aria-label="Magenta"></button>
+                <button class="color-dot" data-color="#ff9f43" style="background:#ff9f43" type="button" aria-label="Orange"></button>
+              </div>
+              <button id="add-label-btn" class="btn btn-sm btn-ghost" type="button">Add</button>
+            </div>
+          </div>
+
+          <!-- Preset Tags -->
+          <div class="card-section">
+            <h4>Quick Tags</h4>
+            <div id="preset-tags-row" class="preset-tags-row"></div>
+          </div>
+
+          <!-- Checklist -->
+          <div class="card-section">
+            <h4>Checklist</h4>
+            <div class="checklist-progress-row">
+              <span id="checklist-progress" class="checklist-progress">0 / 0</span>
+              <div id="checklist-bar-wrap" class="checklist-bar-wrap">
+                <div id="checklist-bar" class="checklist-bar" style="width:0%"></div>
+              </div>
+            </div>
+            <ul id="checklist-items" class="checklist-items"></ul>
+            <div class="checklist-add-row">
+              <input id="checklist-input" type="text" placeholder="Add item&hellip;" />
+              <button id="add-checklist-btn" class="btn btn-sm btn-ghost" type="button">Add</button>
+            </div>
+          </div>
+
+          <!-- Attachments -->
+          <div class="card-section">
+            <h4>Attachments</h4>
+            <div id="attachment-premium-gate" class="premium-gate hidden">
+              <p>Attachments require a Premium plan.</p>
+            </div>
+            <ul id="attachments-list" class="attachments-list"></ul>
+            <div class="attachment-add-row">
+              <button id="add-attachment-btn" class="btn btn-sm btn-ghost" type="button">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                Add file
+              </button>
+              <input id="attachment-file-input" type="file" class="hidden" />
+            </div>
+          </div>
+
+          <!-- Comments -->
+          <section id="comments-section" class="card-section">
+            <h4>Comments</h4>
+            <div id="comments-list" class="comments-list"></div>
+            <div class="comment-add-row">
+              <textarea id="comment-input" placeholder="Write a comment&hellip;" rows="2"></textarea>
+              <button id="post-comment-btn" class="btn btn-sm btn-primary" type="button">Post</button>
+            </div>
+          </section>
+
+          <!-- Activity -->
+          <section class="card-section">
+            <h4>Activity</h4>
+            <ul id="activity-log" class="activity-log"></ul>
+          </section>
+        </div>
+
+        <!-- Right sidebar -->
+        <aside class="card-sidebar">
+          <!-- Status -->
+          <div class="sidebar-field">
+            <label for="card-status-select">Status</label>
+            <select id="card-status-select">
+              <option value="new">New</option>
+              <option value="approved">Approved</option>
+              <option value="fixed">Fixed</option>
+              <option value="for-followup">For Follow-up</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+
+          <!-- Column -->
+          <div class="sidebar-field">
+            <label for="card-column-select">Column</label>
+            <select id="card-column-select"></select>
+          </div>
+
+          <!-- Due Date -->
+          <div class="sidebar-field">
+            <label for="card-due-date">Due Date</label>
+            <input id="card-due-date" type="date" />
+          </div>
+
+          <!-- Assignee -->
+          <div class="sidebar-field">
+            <label>Assignee</label>
+            <div id="assignee-display" class="assignee-display">Unassigned</div>
+            <ul id="assignee-list" class="assignee-list hidden"></ul>
+          </div>
+
+          <!-- Dates info -->
+          <div class="sidebar-field">
+            <label>Created</label>
+            <span id="card-created-display" class="meta-text"></span>
+          </div>
+          <div id="card-created-by-item" class="sidebar-field hidden">
+            <label>Created by</label>
+            <span id="card-created-by-display" class="meta-text"></span>
+          </div>
+          <div id="card-completed-item" class="sidebar-field hidden">
+            <label>Completed</label>
+            <span id="card-completed-display" class="meta-text"></span>
+          </div>
+
+          <!-- Cover -->
+          <div class="sidebar-field">
+            <label>Cover</label>
+            <div id="cover-premium-gate" class="premium-gate hidden">
+              <p>Cover images require Premium.</p>
+            </div>
+            <div id="cover-color-swatches" class="cover-color-swatches">
+              <button class="color-swatch" data-color="#6c63ff" style="background:#6c63ff" type="button"></button>
+              <button class="color-swatch" data-color="#48dbfb" style="background:#48dbfb" type="button"></button>
+              <button class="color-swatch" data-color="#ff6b6b" style="background:#ff6b6b" type="button"></button>
+              <button class="color-swatch" data-color="#feca57" style="background:#feca57" type="button"></button>
+              <button class="color-swatch" data-color="#1dd1a1" style="background:#1dd1a1" type="button"></button>
+              <button class="color-swatch" data-color="#222f3e" style="background:#222f3e" type="button"></button>
+            </div>
+            <div class="cover-actions">
+              <button id="cover-upload-btn" class="btn btn-sm btn-ghost" type="button">Upload image</button>
+              <input id="cover-file-input" type="file" accept="image/*" class="hidden" />
+              <button id="cover-remove-btn" class="btn btn-sm btn-ghost btn-danger" type="button">Remove</button>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="card-actions">
+            <button id="save-card-btn" class="btn btn-primary btn-block" type="button">Save Card</button>
+            <button id="delete-card-btn" class="btn btn-danger btn-block" type="button">Delete Card</button>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── NEW PROJECT MODAL ── -->
+  <div id="new-project-modal" class="modal-overlay hidden" data-modal="new-project">
+    <div class="modal modal-sm">
+      <button class="modal-close-btn" data-close="new-project" type="button" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <h2 class="modal-title">New Project</h2>
+      <div class="form-group">
+        <label for="new-project-name">Project Name</label>
+        <input id="new-project-name" type="text" placeholder="e.g. Marketing Sprint" maxlength="60" />
+      </div>
+      <div class="form-group">
+        <label for="new-project-code">Project Code</label>
+        <input id="new-project-code" type="text" placeholder="e.g. MKT" maxlength="6" />
+        <span class="form-hint">Used as card key prefix (e.g. MKT-1, MKT-2)</span>
+      </div>
+      <div class="form-group">
+        <label for="new-project-desc">Description</label>
+        <textarea id="new-project-desc" placeholder="Optional description&hellip;" rows="2"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Color</label>
+        <div id="new-project-color-picker" class="color-picker-swatches">
+          <button class="color-swatch active" data-color="#6c63ff" style="background:#6c63ff" type="button"></button>
+          <button class="color-swatch" data-color="#48dbfb" style="background:#48dbfb" type="button"></button>
+          <button class="color-swatch" data-color="#ff6b6b" style="background:#ff6b6b" type="button"></button>
+          <button class="color-swatch" data-color="#feca57" style="background:#feca57" type="button"></button>
+          <button class="color-swatch" data-color="#1dd1a1" style="background:#1dd1a1" type="button"></button>
+          <button class="color-swatch" data-color="#ff9f43" style="background:#ff9f43" type="button"></button>
+          <button class="color-swatch" data-color="#ee5a24" style="background:#ee5a24" type="button"></button>
+          <button class="color-swatch" data-color="#a29bfe" style="background:#a29bfe" type="button"></button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="create-project-btn" class="btn btn-primary" type="button">Create Project</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── EDIT PROJECT MODAL ── -->
+  <div id="edit-project-modal" class="modal-overlay hidden" data-modal="edit-project">
+    <div class="modal modal-sm">
+      <button class="modal-close-btn" data-close="edit-project" type="button" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <h2 class="modal-title">Edit Project</h2>
+      <div class="form-group">
+        <label for="edit-project-name">Project Name</label>
+        <input id="edit-project-name" type="text" maxlength="60" />
+      </div>
+      <div class="form-group">
+        <label for="edit-project-code">Project Code</label>
+        <input id="edit-project-code" type="text" maxlength="6" />
+      </div>
+      <div class="form-group">
+        <label for="edit-project-desc">Description</label>
+        <textarea id="edit-project-desc" rows="2"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Color</label>
+        <div id="edit-project-color-picker" class="color-picker-swatches">
+          <button class="color-swatch" data-color="#6c63ff" style="background:#6c63ff" type="button"></button>
+          <button class="color-swatch" data-color="#48dbfb" style="background:#48dbfb" type="button"></button>
+          <button class="color-swatch" data-color="#ff6b6b" style="background:#ff6b6b" type="button"></button>
+          <button class="color-swatch" data-color="#feca57" style="background:#feca57" type="button"></button>
+          <button class="color-swatch" data-color="#1dd1a1" style="background:#1dd1a1" type="button"></button>
+          <button class="color-swatch" data-color="#ff9f43" style="background:#ff9f43" type="button"></button>
+          <button class="color-swatch" data-color="#ee5a24" style="background:#ee5a24" type="button"></button>
+          <button class="color-swatch" data-color="#a29bfe" style="background:#a29bfe" type="button"></button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="edit-project-status">Status</label>
+        <select id="edit-project-status">
+          <option value="active">Active</option>
+          <option value="archived">Archived</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+
+      <!-- Collaborators -->
+      <div class="form-group">
+        <label>Collaborators</label>
+        <ul id="collaborators-list" class="collaborators-list"></ul>
+      </div>
+
+      <div class="modal-footer modal-footer-split">
+        <button id="delete-project-btn" class="btn btn-danger" type="button">Delete Project</button>
+        <button id="save-project-btn" class="btn btn-primary" type="button">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SETTINGS MODAL ── -->
+  <div id="settings-modal" class="modal-overlay hidden" data-modal="settings">
+    <div class="modal modal-sm">
+      <button class="modal-close-btn" data-close="settings" type="button" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <h2 class="modal-title">Settings</h2>
+
+      <!-- Theme -->
+      <div class="settings-section">
+        <h4>Theme</h4>
+        <div class="theme-picker">
+          <button class="theme-option active" data-theme="dark" type="button">Dark</button>
+          <button class="theme-option" data-theme="light" type="button">Light</button>
+        </div>
+      </div>
+
+      <!-- Columns -->
+      <div class="settings-section">
+        <h4>Columns</h4>
+        <div class="column-add-row">
+          <input id="new-column-name" type="text" placeholder="New column name&hellip;" maxlength="30" />
+          <button id="add-column-btn" class="btn btn-sm btn-primary" type="button">Add Column</button>
+        </div>
+      </div>
+
+      <!-- Export -->
+      <div id="export-section" class="settings-section">
+        <h4>Export Data</h4>
+        <button id="export-json-btn" class="btn btn-sm btn-ghost" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export JSON
+        </button>
+      </div>
+
+      <!-- Import -->
+      <div class="settings-section">
+        <h4>Import Data</h4>
+        <button id="import-json-btn" class="btn btn-sm btn-ghost" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Import JSON
+        </button>
+        <input id="import-file-input" type="file" accept=".json" class="hidden" />
+      </div>
+
+      <!-- Storage -->
+      <div class="settings-section">
+        <h4>Storage</h4>
+        <div id="storage-usage-display" class="storage-usage-display">
+          <div class="storage-bar-wrap">
+            <div class="storage-bar" style="width:0%"></div>
+          </div>
+          <span class="storage-text">Calculating&hellip;</span>
+        </div>
+        <button id="buy-storage-btn" class="btn btn-sm btn-ghost hidden" type="button">Buy More Storage</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── UPGRADE MODAL ── -->
+  <div id="upgrade-modal" class="modal-overlay hidden" data-modal="upgrade">
+    <div class="modal modal-sm">
+      <button class="modal-close-btn" data-close="upgrade" type="button" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <h2 class="modal-title">Upgrade to Premium</h2>
+      <p class="modal-subtitle">Unlock unlimited projects, real-time collaboration, attachments, and more.</p>
+
+      <div class="plan-options">
+        <label class="plan-option selected">
+          <input type="radio" name="plan" value="monthly" checked />
+          <div class="plan-card">
+            <span class="plan-name">Monthly</span>
+            <span class="plan-price">$3.99<small>/mo</small></span>
+          </div>
+          <button id="select-monthly-btn" class="btn btn-sm btn-ghost" type="button">Select</button>
+        </label>
+        <label class="plan-option">
+          <input type="radio" name="plan" value="annual" />
+          <div class="plan-card">
+            <span class="plan-name">Annual</span>
+            <span class="plan-price">$39.99<small>/yr</small></span>
+            <span class="plan-badge">Save 17%</span>
+          </div>
+          <button id="select-annual-btn" class="btn btn-sm btn-ghost" type="button">Select</button>
+        </label>
+      </div>
+
+      <div class="modal-footer">
+        <button id="checkout-btn" class="btn btn-primary btn-block" type="button">Continue to Checkout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── INVITE MODAL ── -->
+  <div id="invite-modal" class="modal-overlay hidden" data-modal="invite">
+    <div class="modal modal-sm">
+      <button class="modal-close-btn" data-close="invite" type="button" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <h2 class="modal-title">Invite Collaborators</h2>
+      <div class="form-group">
+        <label for="invite-email">Email Address</label>
+        <input id="invite-email" type="email" placeholder="colleague@example.com" />
+      </div>
+      <div class="form-group">
+        <label for="invite-role">Role</label>
+        <select id="invite-role">
+          <option value="editor">Editor</option>
+          <option value="viewer">Viewer</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button id="send-invite-btn" class="btn btn-primary" type="button">Send Invite</button>
+      </div>
+      <div class="invite-pending-section">
+        <h4>Pending Invites</h4>
+        <ul id="pending-invites-list" class="pending-invites-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DOWNGRADE MODAL ── -->
+  <div id="downgrade-modal" class="modal-overlay hidden" data-modal="downgrade">
+    <div class="modal modal-sm">
+      <button class="modal-close-btn" data-close="downgrade" type="button" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <h2 class="modal-title">Your Premium Plan Has Ended</h2>
+      <p class="modal-subtitle">Export your data before switching to the free plan, or renew your subscription.</p>
+
+      <div class="downgrade-actions">
+        <button id="downgrade-export-json" class="btn btn-ghost btn-block" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export Data (JSON)
+        </button>
+        <button id="downgrade-renew-btn" class="btn btn-primary btn-block" type="button">Renew Premium</button>
+        <button id="downgrade-continue-btn" class="btn btn-ghost btn-block" type="button">Continue with Free Plan</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========================================================= -->
+  <!-- APP ENTRY POINT                                            -->
+  <!-- ========================================================= -->
+  <script type="module" src="./js/app.js"></script>
+
+</body>
+</html>

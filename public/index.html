@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="FlowLane — Personal Kanban for Chrome. Organize your work with drag-and-drop boards, real-time collaboration, and seamless sync across devices." />
+  <title>FlowLane — Personal Kanban That Flows</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── Reset & Base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #0b0d14;
+      --bg2:       #111420;
+      --bg3:       #181c2e;
+      --surface:   #1e2235;
+      --surface2:  #242840;
+      --border:    rgba(255,255,255,.07);
+      --border2:   rgba(255,255,255,.12);
+      --accent:    #7c5cfc;
+      --accent2:   #a78bfa;
+      --accent3:   #c4b5fd;
+      --teal:      #2dd4bf;
+      --pink:      #f472b6;
+      --amber:     #fbbf24;
+      --green:     #34d399;
+      --text:      #f1f3ff;
+      --text2:     #9aa0c0;
+      --text3:     #5a6080;
+      --radius:    14px;
+      --radius-sm: 8px;
+      --shadow:    0 4px 32px rgba(0,0,0,.45);
+      --shadow-lg: 0 12px 64px rgba(0,0,0,.6);
+      --glow:      0 0 40px rgba(124,92,252,.25);
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
+    button { font-family: inherit; cursor: pointer; border: none; outline: none; }
+
+    /* ─── Scrollbar ─────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 99px; }
+
+    /* ─── Utils ─────────────────────────────────────────────────── */
+    .container { width: 100%; max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 99px;
+      font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+      border: 1px solid var(--border2);
+      background: rgba(124,92,252,.12);
+      color: var(--accent3);
+    }
+    .badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+
+    /* ─── Gradient Text ─────────────────────────────────────────── */
+    .grad { background: linear-gradient(135deg, #fff 30%, var(--accent3) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .grad-accent { background: linear-gradient(135deg, var(--accent) 0%, var(--teal) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    /* ─── Buttons ─────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px; border-radius: var(--radius-sm);
+      font-size: 15px; font-weight: 600; transition: all .2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #5b3fd4);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(124,92,252,.4);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(124,92,252,.55); }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--text2);
+    }
+    .btn-outline:hover { border-color: var(--accent2); color: var(--text); background: rgba(124,92,252,.08); }
+    .btn-ghost { background: transparent; color: var(--text2); padding: 10px 16px; }
+    .btn-ghost:hover { color: var(--text); }
+    .btn-lg { padding: 16px 32px; font-size: 16px; border-radius: 10px; }
+
+    /* ─── Animated BG Gradient ───────────────────────────────────── */
+    .hero-glow {
+      position: absolute; width: 900px; height: 900px;
+      border-radius: 50%; filter: blur(120px); pointer-events: none;
+      background: radial-gradient(circle, rgba(124,92,252,.18) 0%, rgba(45,212,191,.06) 50%, transparent 70%);
+      top: -200px; left: 50%; transform: translateX(-50%);
+      animation: floatGlow 8s ease-in-out infinite;
+    }
+    @keyframes floatGlow { 0%,100%{transform:translateX(-50%) translateY(0);} 50%{transform:translateX(-50%) translateY(-30px);} }
+
+    /* ─── Nav ────────────────────────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      background: rgba(11,13,20,.8);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 20px; font-weight: 800; letter-spacing: -.02em;
+    }
+    .logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .logo-icon img { width: 36px; height: 36px; display: block; border-radius: 10px; }
+    .nav-links { display: flex; align-items: center; gap: 4px; }
+    .nav-links a { padding: 8px 14px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; color: var(--text2); transition: all .2s; }
+    .nav-links a:hover { color: var(--text); background: rgba(255,255,255,.05); }
+    .nav-cta { display: flex; align-items: center; gap: 10px; }
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 8px; }
+    .hamburger span { width: 22px; height: 2px; background: var(--text2); border-radius: 2px; transition: all .3s; display: block; }
+    .mobile-menu {
+      display: none; flex-direction: column; gap: 2px;
+      padding: 12px; background: var(--bg2); border-bottom: 1px solid var(--border);
+    }
+    .mobile-menu a { padding: 12px 16px; border-radius: var(--radius-sm); font-size: 15px; font-weight: 500; color: var(--text2); transition: all .2s; }
+    .mobile-menu a:hover { color: var(--text); background: rgba(255,255,255,.05); }
+    .mobile-menu.open { display: flex; }
+
+    /* ─── Hero ───────────────────────────────────────────────── */
+    .hero {
+      position: relative; overflow: hidden;
+      padding: 100px 0 80px;
+      text-align: center;
+    }
+    .hero-tag { margin-bottom: 24px; }
+    .hero h1 {
+      font-size: clamp(40px, 6vw, 80px);
+      font-weight: 900; line-height: 1.05; letter-spacing: -.04em;
+      margin-bottom: 24px;
+    }
+    .hero p {
+      font-size: clamp(16px, 2vw, 20px); color: var(--text2);
+      max-width: 580px; margin: 0 auto 40px; line-height: 1.7;
+    }
+    .hero p.hero-sub {
+      font-size: clamp(14px, 1.5vw, 16px);
+      color: var(--text3);
+      max-width: 500px;
+      margin: -24px auto 40px;
+    }
+    .hero-actions { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .browser-strip {
+      display: flex; align-items: center; justify-content: center; gap: 24px;
+      margin-top: 48px; flex-wrap: wrap;
+    }
+    .browser-strip span { font-size: 13px; color: var(--text3); }
+    .browser-pill {
+      display: flex; align-items: center; gap: 7px;
+      padding: 6px 14px; border-radius: 99px;
+      background: var(--surface); border: 1px solid var(--border2);
+      font-size: 13px; font-weight: 500; color: var(--text2);
+    }
+    .browser-pill svg { width: 16px; height: 16px; }
+
+    /* ─── Board Preview ─────────────────────────────────────── */
+    .board-preview {
+      margin: 72px auto 0;
+      max-width: 1000px;
+      position: relative;
+    }
+    .board-frame {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg), var(--glow);
+    }
+    .frame-bar {
+      background: var(--bg3);
+      padding: 12px 16px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .frame-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .frame-dot.r { background: #ff5f57; }
+    .frame-dot.y { background: #febc2e; }
+    .frame-dot.g { background: #28c840; }
+    .frame-title { margin-left: 12px; font-size: 13px; color: var(--text3); font-weight: 500; }
+    .board-body { padding: 24px; display: flex; gap: 16px; overflow-x: auto; min-height: 340px; }
+
+    /* Kanban columns */
+    .k-col {
+      flex: 0 0 220px;
+      background: var(--surface);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 16px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .k-col-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .k-col-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text2); }
+    .k-count { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--surface2); color: var(--text3); }
+    .k-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 13px;
+      cursor: grab;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .k-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.4); }
+    .k-card-title { font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .k-card-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .k-tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
+    .k-tag.purple { background: rgba(124,92,252,.2); color: var(--accent3); }
+    .k-tag.teal   { background: rgba(45,212,191,.15); color: var(--teal); }
+    .k-tag.pink   { background: rgba(244,114,182,.15); color: var(--pink); }
+    .k-tag.amber  { background: rgba(251,191,36,.15); color: var(--amber); }
+    .k-tag.green  { background: rgba(52,211,153,.15); color: var(--green); }
+    .k-avatar { width: 20px; height: 20px; border-radius: 50%; margin-left: auto; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .k-avatar.a { background: linear-gradient(135deg, var(--accent), #5b3fd4); }
+    .k-avatar.b { background: linear-gradient(135deg, var(--teal), #0891b2); }
+    .k-avatar.c { background: linear-gradient(135deg, var(--pink), #db2777); }
+    .k-add {
+      margin-top: auto; display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--text3); cursor: pointer;
+      padding: 8px; border-radius: 8px; transition: all .2s;
+    }
+    .k-add:hover { background: var(--surface2); color: var(--text2); }
+    .presence-bar {
+      padding: 12px 24px; border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--text3);
+    }
+    .presence-avatars { display: flex; }
+    .presence-avatars .k-avatar { width: 24px; height: 24px; font-size: 10px; margin-left: -6px; border: 2px solid var(--bg2); }
+    .presence-avatars .k-avatar:first-child { margin-left: 0; }
+    .online-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+    /* ─── Social Proof ───────────────────────────────────────── */
+    .social { padding: 48px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .social-inner { display: flex; align-items: center; justify-content: center; gap: 48px; flex-wrap: wrap; }
+    .social-item { text-align: center; }
+    .social-item .num { font-size: 32px; font-weight: 800; letter-spacing: -.03em; }
+    .social-item .label { font-size: 13px; color: var(--text3); margin-top: 2px; }
+
+    /* ─── Who It's For ───────────────────────────────────────── */
+    .who-section { padding: 100px 0; }
+    .who-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+    }
+    .who-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 24px;
+      text-align: center;
+      transition: all .25s;
+      position: relative;
+      overflow: hidden;
+    }
+    .who-card::before {
+      content: ''; position: absolute; inset: 0; opacity: 0;
+      background: radial-gradient(circle at top center, rgba(124,92,252,.1), transparent 60%);
+      transition: opacity .3s;
+    }
+    .who-card:hover { border-color: rgba(124,92,252,.3); transform: translateY(-4px); box-shadow: var(--shadow); }
+    .who-card:hover::before { opacity: 1; }
+    .who-emoji {
+      font-size: 40px; margin-bottom: 16px; display: block;
+      filter: grayscale(0);
+    }
+    .who-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .who-card p { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+    /* ─── Section Headers ─────────────────────────────────────── */
+    .section-head { text-align: center; margin-bottom: 64px; }
+    .section-head h2 { font-size: clamp(28px, 4vw, 48px); font-weight: 800; letter-spacing: -.03em; margin-top: 16px; margin-bottom: 16px; }
+    .section-head p { font-size: 17px; color: var(--text2); max-width: 520px; margin: 0 auto; }
+
+    /* ─── Features ───────────────────────────────────────────── */
+    .features { padding: 100px 0; }
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .feat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      transition: all .25s;
+      position: relative; overflow: hidden;
+    }
+    .feat-card::before {
+      content: ''; position: absolute; inset: 0; opacity: 0;
+      background: radial-gradient(circle at top left, rgba(124,92,252,.12), transparent 60%);
+      transition: opacity .3s;
+    }
+    .feat-card:hover { border-color: rgba(124,92,252,.35); transform: translateY(-4px); box-shadow: var(--shadow); }
+    .feat-card:hover::before { opacity: 1; }
+    .feat-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px; font-size: 22px;
+    }
+    .feat-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+    .feat-card p { font-size: 14px; color: var(--text2); line-height: 1.7; }
+    .feat-card .feat-pill {
+      display: inline-block; margin-top: 14px;
+      font-size: 11px; font-weight: 700; letter-spacing: .05em;
+      padding: 3px 10px; border-radius: 99px;
+      background: rgba(52,211,153,.12); color: var(--green);
+    }
+    .feat-card .feat-pill.pro { background: rgba(124,92,252,.15); color: var(--accent3); }
+
+    /* Feature icon colors */
+    .fi-purple { background: rgba(124,92,252,.15); color: var(--accent2); }
+    .fi-teal   { background: rgba(45,212,191,.12); color: var(--teal); }
+    .fi-pink   { background: rgba(244,114,182,.12); color: var(--pink); }
+    .fi-amber  { background: rgba(251,191,36,.12); color: var(--amber); }
+    .fi-green  { background: rgba(52,211,153,.12); color: var(--green); }
+    .fi-blue   { background: rgba(96,165,250,.12); color: #60a5fa; }
+
+    /* ─── How it works ───────────────────────────────────────── */
+    .hiw { padding: 100px 0; background: linear-gradient(180deg, var(--bg) 0%, var(--bg2) 50%, var(--bg) 100%); }
+    .hiw-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; position: relative; }
+    .hiw-steps::before {
+      content: ''; position: absolute;
+      top: 28px; left: calc(16.66% + 28px); right: calc(16.66% + 28px);
+      height: 1px; background: linear-gradient(90deg, var(--accent) 0%, var(--teal) 100%);
+    }
+    .hiw-step { text-align: center; position: relative; }
+    .hiw-num {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #5b3fd4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 800; margin: 0 auto 20px;
+      box-shadow: 0 0 0 8px rgba(124,92,252,.1);
+    }
+    .hiw-step h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+    .hiw-step p { font-size: 14px; color: var(--text2); max-width: 220px; margin: 0 auto; }
+
+    /* ─── Comparison Table ───────────────────────────────────── */
+    .comparison { padding: 100px 0; background: var(--bg2); }
+    .comparison-table {
+      width: 100%; max-width: 900px; margin: 0 auto;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .comparison-table thead th {
+      padding: 16px 20px;
+      text-align: left;
+      font-size: 15px; font-weight: 700;
+      color: var(--text);
+      border-bottom: 2px solid var(--border2);
+    }
+    .comparison-table thead th:first-child { color: var(--text3); font-weight: 500; }
+    .comparison-table thead th.highlight {
+      color: var(--accent3);
+      position: relative;
+    }
+    .comparison-table tbody td {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text2);
+    }
+    .comparison-table tbody td:first-child {
+      font-weight: 600; color: var(--text);
+    }
+    .comparison-table tbody td.highlight {
+      color: var(--accent3); font-weight: 600;
+      background: rgba(124,92,252,.04);
+    }
+    .comparison-table .comp-check { color: var(--green); }
+    .comparison-table .comp-x { color: var(--text3); opacity: .5; }
+    .comparison-table .comp-tag {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 99px;
+      background: rgba(52,211,153,.12); color: var(--green);
+    }
+
+    /* ─── Pricing ─────────────────────────────────────────────── */
+    .pricing { padding: 100px 0; }
+    .pricing-toggle {
+      display: flex; align-items: center; justify-content: center; gap: 16px;
+      margin-bottom: 48px;
+    }
+    .pricing-toggle-label {
+      font-size: 15px; font-weight: 600; color: var(--text3);
+      cursor: pointer; transition: color .2s;
+    }
+    .pricing-toggle-label.active { color: var(--text); }
+    .pricing-toggle-switch {
+      position: relative; width: 52px; height: 28px;
+      background: var(--surface2); border-radius: 99px;
+      cursor: pointer; transition: background .3s;
+      border: 1px solid var(--border2);
+    }
+    .pricing-toggle-switch.annual { background: rgba(124,92,252,.3); border-color: rgba(124,92,252,.5); }
+    .pricing-toggle-knob {
+      position: absolute; top: 3px; left: 3px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #fff; transition: transform .3s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,.3);
+    }
+    .pricing-toggle-switch.annual .pricing-toggle-knob {
+      transform: translateX(24px);
+    }
+    .pricing-save-badge {
+      font-size: 11px; font-weight: 700;
+      padding: 3px 10px; border-radius: 99px;
+      background: rgba(52,211,153,.15); color: var(--green);
+      letter-spacing: .03em;
+    }
+    .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 860px; margin: 0 auto; }
+    .price-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px;
+      position: relative;
+    }
+    .price-card.featured {
+      border-color: rgba(124,92,252,.5);
+      background: linear-gradient(160deg, var(--surface2) 0%, var(--surface) 100%);
+      box-shadow: 0 0 0 1px rgba(124,92,252,.2), var(--glow);
+    }
+    .price-badge {
+      position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--accent), #5b3fd4);
+      color: #fff; font-size: 12px; font-weight: 700; letter-spacing: .05em;
+      padding: 4px 16px; border-radius: 99px; white-space: nowrap;
+    }
+    .price-name { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); margin-bottom: 12px; }
+    .price-amount { font-size: 52px; font-weight: 900; letter-spacing: -.04em; line-height: 1; }
+    .price-amount span { font-size: 20px; font-weight: 500; color: var(--text2); }
+    .price-period { font-size: 14px; color: var(--text3); margin-bottom: 28px; }
+    .price-divider { height: 1px; background: var(--border); margin: 24px 0; }
+    .price-features { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+    .price-features li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text2); }
+    .price-features li svg { flex-shrink: 0; }
+    .price-features li .check { color: var(--green); }
+    .price-features li .x { color: var(--text3); }
+    .price-btn { width: 100%; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 700; transition: all .2s; text-align: center; display: block; }
+    .coffee-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 16px; padding: 6px 14px; border-radius: 99px;
+      font-size: 12px; font-weight: 600;
+      background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.2);
+      color: var(--amber);
+    }
+    .free-tagline {
+      font-size: 13px; color: var(--text3); margin-top: 12px;
+      font-weight: 500; font-style: italic;
+    }
+
+    /* Price transition animation */
+    .price-amount, .price-period { transition: opacity .3s ease; }
+    .price-fade { opacity: 0; }
+
+    /* ─── Testimonials ───────────────────────────────────────── */
+    .testimonials { padding: 100px 0; background: var(--bg2); }
+    .testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .testi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+    }
+    .stars { color: var(--amber); font-size: 14px; margin-bottom: 16px; letter-spacing: 2px; }
+    .testi-card blockquote { font-size: 14px; color: var(--text2); line-height: 1.75; font-style: italic; margin-bottom: 20px; }
+    .testi-author { display: flex; align-items: center; gap: 12px; }
+    .testi-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+    }
+    .testi-name { font-size: 14px; font-weight: 600; }
+    .testi-role { font-size: 12px; color: var(--text3); }
+
+    /* ─── FAQ ─────────────────────────────────────────────────── */
+    .faq { padding: 100px 0; }
+    .faq-list { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 4px; }
+    .faq-item {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: var(--surface);
+    }
+    .faq-q {
+      width: 100%; display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 22px; font-size: 15px; font-weight: 600; color: var(--text);
+      background: none; text-align: left; gap: 16px;
+    }
+    .faq-q:hover { background: rgba(255,255,255,.03); }
+    .faq-icon { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; transition: transform .3s; }
+    .faq-a { max-height: 0; overflow: hidden; transition: max-height .35s ease; }
+    .faq-a-inner { padding: 0 22px 18px; font-size: 14px; color: var(--text2); line-height: 1.75; }
+    .faq-item.open .faq-icon { transform: rotate(45deg); background: rgba(124,92,252,.2); }
+    .faq-item.open .faq-a { max-height: 300px; }
+
+    /* ─── CTA Banner ─────────────────────────────────────────── */
+    .cta-banner {
+      padding: 100px 0;
+      text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .cta-banner::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, rgba(124,92,252,.14) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-banner h2 { font-size: clamp(30px, 5vw, 56px); font-weight: 900; letter-spacing: -.04em; margin-bottom: 20px; }
+    .cta-banner p { font-size: 18px; color: var(--text2); max-width: 560px; margin: 0 auto 40px; }
+
+    /* ─── Footer ─────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 48px 0 32px;
+    }
+    .footer-top { display: flex; gap: 64px; margin-bottom: 40px; flex-wrap: wrap; }
+    .footer-brand { flex: 0 0 240px; }
+    .footer-brand p { font-size: 14px; color: var(--text3); margin-top: 12px; line-height: 1.7; }
+    .footer-cols { display: flex; gap: 48px; flex: 1; flex-wrap: wrap; }
+    .footer-col h4 { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text3); margin-bottom: 16px; }
+    .footer-col a { display: block; font-size: 14px; color: var(--text3); margin-bottom: 10px; transition: color .2s; }
+    .footer-col a:hover { color: var(--text); }
+    .footer-bottom { border-top: 1px solid var(--border); padding-top: 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .footer-bottom p { font-size: 13px; color: var(--text3); }
+
+    /* ─── Scroll Animations ───────────────────────────────────── */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+    .reveal-delay-1 { transition-delay: .1s; }
+    .reveal-delay-2 { transition-delay: .2s; }
+    .reveal-delay-3 { transition-delay: .3s; }
+
+    /* ─── Responsive ─────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .nav-links, .nav-cta .btn-outline { display: none; }
+      .hamburger { display: flex; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .testi-grid { grid-template-columns: 1fr 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; max-width: 480px; }
+      .hiw-steps { grid-template-columns: 1fr; }
+      .hiw-steps::before { display: none; }
+      .footer-top { flex-direction: column; gap: 32px; }
+      .footer-brand { flex: none; }
+      .who-grid { grid-template-columns: 1fr 1fr; }
+      .comparison-table { font-size: 12px; }
+      .comparison-table thead th,
+      .comparison-table tbody td { padding: 10px 12px; }
+    }
+    @media (max-width: 600px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .testi-grid { grid-template-columns: 1fr; }
+      .social-inner { gap: 32px; }
+      .board-body { padding: 16px; gap: 12px; }
+      .k-col { flex: 0 0 180px; }
+      .hero { padding: 64px 0 48px; }
+      .footer-cols { gap: 32px; }
+      .who-grid { grid-template-columns: 1fr; }
+      .comparison-table { display: block; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── Nav ──────────────────────────────────────────────────── -->
+<nav>
+  <div class="container nav-inner">
+    <a href="#" class="logo">
+      <div class="logo-icon">
+        <img src="./logo.png" alt="FlowLane logo" width="36" height="36" />
+      </div>
+      FlowLane
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how-it-works">How it works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="nav-cta">
+      <a href="#pricing" class="btn btn-outline" style="display:inline-flex;">See plans</a>
+      <a href="#install" class="btn btn-primary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Add to Chrome
+      </a>
+    </div>
+    <div class="hamburger" id="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#features">Features</a>
+    <a href="#how-it-works">How it works</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
+    <a href="#install" class="btn btn-primary btn-lg" style="margin-top:8px;justify-content:center;">Add to Chrome — Free</a>
+  </div>
+</nav>
+
+<!-- ─── Hero ──────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="container">
+    <div class="hero-tag">
+      <span class="badge"><span class="dot"></span> Built for builders who ship</span>
+    </div>
+    <h1><span class="grad">The Kanban board that<br>gets out of your way.</span></h1>
+    <p>Stop wrestling with bloated project tools. FlowLane is a fast, minimal Kanban board built for solo founders, freelancers, and small teams who need to stay focused — not manage a tool.</p>
+    <p class="hero-sub">No setup. No learning curve. Just open your browser and start shipping.</p>
+    <div class="hero-actions">
+      <a href="#install" class="btn btn-primary btn-lg">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Install Free — Chrome
+      </a>
+      <a href="#features" class="btn btn-outline btn-lg">Explore features</a>
+    </div>
+    <div class="browser-strip">
+      <span>Also works on</span>
+      <!-- Edge -->
+      <div class="browser-pill">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21.7 16.2c-.3.8-.6 1.5-1 2.1C19.5 20.1 17.9 21 16 21c-1.6 0-3-.6-4.1-1.6-.3-.3-.6-.6-.8-.9H19c1.1 0 2-.5 2.5-1.3l.2-1z" fill="#0078D4"/>
+          <path d="M4.8 17.5C3.7 16 3 14.1 3 12c0-5 4-9 9-9 2.5 0 4.8 1 6.4 2.6C16.9 4.4 14.6 3 12 3 6.5 3 2 7.5 2 13c0 2.8 1.1 5.4 2.8 7.2l.8-.7-.8-2z" fill="#0364B8"/>
+          <path d="M21.9 13.5c0 .4 0 .9-.1 1.3-.1.5-.2.9-.4 1.4H11.1c-1.7 0-3-1.3-3-3 0-.2 0-.5.1-.7H4.8c-.2.7-.3 1.5-.3 2.3 0 1.4.3 2.7.8 3.9C6.9 20.4 9.3 22 12 22c2.3 0 4.4-.9 5.9-2.4 1-.9 1.7-2 2.1-3.3.2-.6.3-1.2.4-1.9.1-.7.1-1.3.1-1.9-.1-.3-.4-.5-.6 0z" fill="#1BBBEE"/>
+        </svg>
+        Edge
+      </div>
+      <!-- Brave -->
+      <div class="browser-pill">
+        <svg viewBox="0 0 24 24" fill="currentColor" style="color:#fb542b">
+          <path d="M20.93 8.6l-.96-2.27-.83 1.28c-.27-.39-.56-.73-.87-1.02l.27-1.47-2.17-.89-.2 1.38c-.43-.16-.88-.27-1.35-.3L14.35 4h-4.7l-.47 1.3c-.47.04-.92.15-1.35.3L7.63 4.24l-2.17.89.27 1.47c-.31.29-.6.63-.87 1.02L3.93 6.33 3 8.6l1.37.6c-.11.46-.17.93-.17 1.42 0 .6.09 1.18.25 1.72l-1.3.75 1.05 2.2 1.33-.57c.28.4.59.77.94 1.1l-.46 1.42 2.1 1.1.63-1.28c.43.18.87.31 1.33.38l.21 1.44h4.56l.21-1.44c.46-.07.9-.2 1.33-.38l.63 1.28 2.1-1.1-.46-1.42c.35-.33.66-.7.94-1.1l1.33.57 1.05-2.2-1.3-.75c.16-.54.25-1.12.25-1.72 0-.49-.06-.96-.17-1.42l1.37-.6z"/>
+        </svg>
+        Brave
+      </div>
+      <!-- Vivaldi -->
+      <div class="browser-pill">
+        <svg viewBox="0 0 24 24" fill="#ef3939">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+          <path d="M12 6l-3.5 9h2.5l.5-1.5h2l.5 1.5h2.5L12 6zm-0.5 6l.5-1.5.5 1.5h-1z"/>
+        </svg>
+        Vivaldi
+      </div>
+    </div>
+
+    <!-- Board Preview -->
+    <div class="board-preview reveal">
+      <div class="board-frame">
+        <div class="frame-bar">
+          <div class="frame-dot r"></div>
+          <div class="frame-dot y"></div>
+          <div class="frame-dot g"></div>
+          <div class="frame-title">FlowLane — My Work Board</div>
+        </div>
+        <div class="board-body">
+          <!-- Backlog -->
+          <div class="k-col">
+            <div class="k-col-header">
+              <span class="k-col-title">Backlog</span>
+              <span class="k-count">3</span>
+            </div>
+            <div class="k-card">
+              <div class="k-card-title">Research competitor pricing</div>
+              <div class="k-card-meta">
+                <span class="k-tag purple">Research</span>
+              </div>
+            </div>
+            <div class="k-card">
+              <div class="k-card-title">Design onboarding flow</div>
+              <div class="k-card-meta">
+                <span class="k-tag pink">Design</span>
+                <div class="k-avatar b">JD</div>
+              </div>
+            </div>
+            <div class="k-card">
+              <div class="k-card-title">Write API documentation</div>
+              <div class="k-card-meta">
+                <span class="k-tag teal">Docs</span>
+              </div>
+            </div>
+            <div class="k-add">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add card
+            </div>
+          </div>
+          <!-- In Progress -->
+          <div class="k-col">
+            <div class="k-col-header">
+              <span class="k-col-title" style="color:var(--accent3)">In Progress</span>
+              <span class="k-count">2</span>
+            </div>
+            <div class="k-card" style="border-color:rgba(124,92,252,.3)">
+              <div class="k-card-title">Build Kanban drag & drop</div>
+              <div class="k-card-meta">
+                <span class="k-tag purple">Dev</span>
+                <div class="k-avatar a">ME</div>
+              </div>
+            </div>
+            <div class="k-card">
+              <div class="k-card-title">Set up cloud sync backend</div>
+              <div class="k-card-meta">
+                <span class="k-tag amber">Infra</span>
+                <div class="k-avatar a">ME</div>
+              </div>
+            </div>
+            <div class="k-add">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add card
+            </div>
+          </div>
+          <!-- Review -->
+          <div class="k-col">
+            <div class="k-col-header">
+              <span class="k-col-title" style="color:var(--amber)">Review</span>
+              <span class="k-count">1</span>
+            </div>
+            <div class="k-card">
+              <div class="k-card-title">Landing page copy review</div>
+              <div class="k-card-meta">
+                <span class="k-tag pink">Copy</span>
+                <div class="k-avatar c">SA</div>
+              </div>
+            </div>
+            <div class="k-add">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add card
+            </div>
+          </div>
+          <!-- Done -->
+          <div class="k-col">
+            <div class="k-col-header">
+              <span class="k-col-title" style="color:var(--green)">Done</span>
+              <span class="k-count">4</span>
+            </div>
+            <div class="k-card" style="opacity:.7">
+              <div class="k-card-title">Billing & subscription setup</div>
+              <div class="k-card-meta">
+                <span class="k-tag green">Billing</span>
+              </div>
+            </div>
+            <div class="k-card" style="opacity:.7">
+              <div class="k-card-title">Role-based access control</div>
+              <div class="k-card-meta">
+                <span class="k-tag purple">Dev</span>
+              </div>
+            </div>
+            <div class="k-add">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add card
+            </div>
+          </div>
+        </div>
+        <div class="presence-bar">
+          <div class="online-dot"></div>
+          <div class="presence-avatars">
+            <div class="k-avatar a">ME</div>
+            <div class="k-avatar b">JD</div>
+            <div class="k-avatar c">SA</div>
+          </div>
+          <span style="margin-left:4px">3 collaborators online</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Social Proof ──────────────────────────────────────────── -->
+<section class="social">
+  <div class="container">
+    <div class="social-inner">
+      <div class="social-item reveal">
+        <div class="num grad-accent">Free</div>
+        <div class="label">No credit card ever</div>
+      </div>
+      <div class="social-item reveal reveal-delay-1">
+        <div class="num grad">3 Projects</div>
+        <div class="label">Free tier, no sign-in needed</div>
+      </div>
+      <div class="social-item reveal reveal-delay-2">
+        <div class="num" style="color:var(--accent3)">&#8734;</div>
+        <div class="label">Unlimited on Premium</div>
+      </div>
+      <div class="social-item reveal reveal-delay-3">
+        <div class="num" style="color:var(--teal)">Real-time</div>
+        <div class="label">Live collaboration sync</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Who It's For ─────────────────────────────────────────── -->
+<section class="who-section" id="who">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="badge">Built for you</span>
+      <h2>Are you a <span class="grad">solo founder</span> building something great?</h2>
+      <p>FlowLane is purpose-built for people who ship. No bloat, no complexity, no enterprise sales calls.</p>
+    </div>
+    <div class="who-grid">
+      <div class="who-card reveal">
+        <span class="who-emoji">&#x1F680;</span>
+        <h3>Solo Founders</h3>
+        <p>Building an MVP and need a board that's as fast as your iteration speed. No setup, no overhead.</p>
+      </div>
+      <div class="who-card reveal reveal-delay-1">
+        <span class="who-emoji">&#x1F4BC;</span>
+        <h3>Freelancers</h3>
+        <p>Juggling multiple clients and deadlines. One board per client, all in your browser, always accessible.</p>
+      </div>
+      <div class="who-card reveal reveal-delay-2">
+        <span class="who-emoji">&#x1F465;</span>
+        <h3>Small Teams (2-5)</h3>
+        <p>You hate bloated tools built for 500-person companies. Real-time collaboration without the enterprise price tag.</p>
+      </div>
+      <div class="who-card reveal reveal-delay-3">
+        <span class="who-emoji">&#x1F393;</span>
+        <h3>Students &amp; Side Projects</h3>
+        <p>Organizing coursework, hackathon projects, or that side hustle. Free forever, no account needed to start.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Features ─────────────────────────────────────────────── -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="badge">Everything you need</span>
+      <h2>Built for focus, <span class="grad">not complexity</span></h2>
+      <p>FlowLane strips away the bloat and gives you the exact tools to organize your work — right where you browse.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feat-card reveal">
+        <div class="feat-icon fi-purple">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 9 2 12 5 15"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+        </div>
+        <h3>Smooth Drag & Drop</h3>
+        <p>Effortlessly move cards between columns with fluid, physics-feel drag and drop. Your board stays in sync instantly — no refresh, no friction.</p>
+        <span class="feat-pill">Free</span>
+      </div>
+
+      <div class="feat-card reveal reveal-delay-1">
+        <div class="feat-icon fi-teal">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <h3>Real-Time Collaboration</h3>
+        <p>Invite teammates and see their changes instantly. Live presence indicators show who's online and working on what — no refresh needed.</p>
+        <span class="feat-pill pro">Premium</span>
+      </div>
+
+      <div class="feat-card reveal reveal-delay-2">
+        <div class="feat-icon fi-pink">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3>Role-Based Access</h3>
+        <p>Grant teammates <strong>Admin</strong>, <strong>Editor</strong>, or <strong>Viewer</strong> roles per project. You control who can see, edit, or manage each board.</p>
+        <span class="feat-pill pro">Premium</span>
+      </div>
+
+      <div class="feat-card reveal">
+        <div class="feat-icon fi-amber">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <h3>Works Without Login</h3>
+        <p>Open a new tab and start organizing immediately. No account required. Your 3 free projects live locally in your browser — private by default.</p>
+        <span class="feat-pill">Free</span>
+      </div>
+
+      <div class="feat-card reveal reveal-delay-1">
+        <div class="feat-icon fi-green">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <h3>Export Your Data</h3>
+        <p>Download all your boards as <strong>JSON</strong> or <strong>CSV</strong> anytime. Your data is always yours — no lock-in, ever.</p>
+        <span class="feat-pill">Free & Premium</span>
+      </div>
+
+      <div class="feat-card reveal reveal-delay-2">
+        <div class="feat-icon fi-blue">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3>Secure by Design</h3>
+        <p>Scoped cloud storage per user, sanitized inputs, strict Content Security Policy — security is baked in from day one, not bolted on.</p>
+        <span class="feat-pill">Free & Premium</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── How It Works ───────────────────────────────────────────── -->
+<section class="hiw" id="how-it-works">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="badge">Simple by design</span>
+      <h2>Up and running <span class="grad">in seconds</span></h2>
+      <p>No lengthy onboarding. No tutorial videos. Just open, click, and start flowing.</p>
+    </div>
+    <div class="hiw-steps">
+      <div class="hiw-step reveal">
+        <div class="hiw-num">1</div>
+        <h3>Install the Extension</h3>
+        <p>Add FlowLane to Chrome, Edge, Brave, or Vivaldi from the Web Store — one click, free forever.</p>
+      </div>
+      <div class="hiw-step reveal reveal-delay-1">
+        <div class="hiw-num">2</div>
+        <h3>Create Your Board</h3>
+        <p>Add columns, create cards, and start organizing your work with drag-and-drop. No account needed.</p>
+      </div>
+      <div class="hiw-step reveal reveal-delay-2">
+        <div class="hiw-num">3</div>
+        <h3>Upgrade When Ready</h3>
+        <p>Sign in with Google to unlock cloud sync, unlimited projects, and real-time collaboration.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Why FlowLane Comparison ──────────────────────────────── -->
+<section class="comparison" id="compare">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="badge">Why FlowLane?</span>
+      <h2>Simple tools <span class="grad">win</span></h2>
+      <p>See how FlowLane stacks up against the tools that were built for everyone — and end up working for no one.</p>
+    </div>
+    <div class="reveal" style="overflow-x:auto;">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th class="highlight">FlowLane</th>
+            <th>Trello</th>
+            <th>Asana</th>
+            <th>Notion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Price</td>
+            <td class="highlight"><strong>Free / $3.99/mo</strong></td>
+            <td>Free / $5/mo</td>
+            <td>Free / $10.99/mo</td>
+            <td>Free / $8/mo</td>
+          </tr>
+          <tr>
+            <td>Account required</td>
+            <td class="highlight"><span class="comp-tag">No</span></td>
+            <td>Yes</td>
+            <td>Yes</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td>Setup time</td>
+            <td class="highlight">&lt; 10 seconds</td>
+            <td>2-5 minutes</td>
+            <td>5-10 minutes</td>
+            <td>10+ minutes</td>
+          </tr>
+          <tr>
+            <td>Lives in your browser</td>
+            <td class="highlight"><span class="comp-check">&#10003;</span></td>
+            <td><span class="comp-x">&#10005;</span> Separate tab</td>
+            <td><span class="comp-x">&#10005;</span> Separate tab</td>
+            <td><span class="comp-x">&#10005;</span> Separate tab</td>
+          </tr>
+          <tr>
+            <td>Offline support</td>
+            <td class="highlight"><span class="comp-check">&#10003;</span> Local storage</td>
+            <td>Limited</td>
+            <td>Limited</td>
+            <td>Desktop app only</td>
+          </tr>
+          <tr>
+            <td>Real-time collab</td>
+            <td class="highlight"><span class="comp-check">&#10003;</span></td>
+            <td><span class="comp-check">&#10003;</span></td>
+            <td><span class="comp-check">&#10003;</span></td>
+            <td><span class="comp-check">&#10003;</span></td>
+          </tr>
+          <tr>
+            <td>Complexity</td>
+            <td class="highlight"><span class="comp-tag">Minimal</span></td>
+            <td>Moderate</td>
+            <td>High</td>
+            <td>Very high</td>
+          </tr>
+          <tr>
+            <td>Data privacy (free)</td>
+            <td class="highlight"><span class="comp-tag">100% local</span></td>
+            <td>Cloud only</td>
+            <td>Cloud only</td>
+            <td>Cloud only</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Pricing ───────────────────────────────────────────────── -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="badge">Simple pricing</span>
+      <h2>Free to start, <span class="grad">fair to grow</span></h2>
+      <p>Start with zero commitment. Upgrade only when you need collaboration and unlimited boards.</p>
+    </div>
+
+    <!-- Monthly / Annual Toggle -->
+    <div class="pricing-toggle reveal">
+      <span class="pricing-toggle-label active" id="toggleMonthly">Monthly</span>
+      <div class="pricing-toggle-switch" id="pricingSwitch">
+        <div class="pricing-toggle-knob"></div>
+      </div>
+      <span class="pricing-toggle-label" id="toggleAnnual">Annual</span>
+      <span class="pricing-save-badge">Save 16%</span>
+    </div>
+
+    <div class="pricing-grid">
+      <!-- Free -->
+      <div class="price-card reveal">
+        <div class="price-name">Free</div>
+        <div class="price-amount">$0</div>
+        <div class="price-period">Forever — no card needed</div>
+        <div class="free-tagline">No credit card. No email. Just open and use.</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li>
+            <svg class="check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Up to 3 projects
+          </li>
+          <li>
+            <svg class="check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Unlimited cards & columns
+          </li>
+          <li>
+            <svg class="check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Local browser storage
+          </li>
+          <li>
+            <svg class="check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Drag & drop boards
+          </li>
+          <li>
+            <svg class="check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            JSON & CSV export
+          </li>
+          <li style="opacity:.4">
+            <svg class="x" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Cloud sync
+          </li>
+          <li style="opacity:.4">
+            <svg class="x" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Team collaboration
+          </li>
+        </ul>
+        <a href="#install" class="price-btn btn-outline" style="border:1px solid var(--border2);color:var(--text2);display:block;transition:all .2s;">Get Started Free</a>
+      </div>
+      <!-- Premium -->
+      <div class="price-card featured reveal reveal-delay-1">
+        <div class="price-badge">Most Popular</div>
+        <div class="price-name" style="color:var(--accent3)">Premium</div>
+        <div class="price-amount" id="premiumPrice"><span>$</span>3.99</div>
+        <div class="price-period" id="premiumPeriod">per month &middot; cancel anytime</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li>
+            <svg class="check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <strong>Unlimited</strong> projects
+          </li>
+          <li>
+            <svg class="check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Unlimited cards & columns
+          </li>
+          <li>
+            <svg class="check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Cloud sync across devices
+          </li>
+          <li>
+            <svg class="check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <strong>Real-time</strong> collaboration
+          </li>
+          <li>
+            <svg class="check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Role-based access control
+          </li>
+          <li>
+            <svg class="check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Live presence indicators
+          </li>
+          <li>
+            <svg class="check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Priority support
+          </li>
+        </ul>
+        <a href="#install" class="price-btn btn-primary" style="display:block;text-align:center;border-radius:10px;">Get Premium</a>
+        <div class="coffee-badge" style="justify-content:center;width:100%;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+          Less than a cup of coffee
+        </div>
+      </div>
+    </div>
+    <p style="text-align:center;margin-top:24px;font-size:13px;color:var(--text3)">Secure payment processing &middot; Cancel anytime from the extension</p>
+  </div>
+</section>
+
+<!-- ─── Testimonials ──────────────────────────────────────────── -->
+<section class="testimonials" id="reviews">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="badge">Loved by makers</span>
+      <h2>What people <span class="grad">are saying</span></h2>
+    </div>
+    <div class="testi-grid">
+      <div class="testi-card reveal">
+        <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <blockquote>"Finally a Kanban tool that doesn't require 15 minutes of setup. I installed it, created a board, and was organizing my sprint in under 2 minutes."</blockquote>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,#7c5cfc,#5b3fd4)">MR</div>
+          <div>
+            <div class="testi-name">Marcus R.</div>
+            <div class="testi-role">Solo developer</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card reveal reveal-delay-1">
+        <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <blockquote>"The real-time collaboration is shockingly good for a browser extension. My team of 4 uses it daily. The viewer/editor roles are exactly what we needed."</blockquote>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,#2dd4bf,#0891b2)">SL</div>
+          <div>
+            <div class="testi-name">Sarah L.</div>
+            <div class="testi-role">Product Manager</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card reveal reveal-delay-2">
+        <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <blockquote>"I love that it works offline without login. My personal tasks stay local and private. I upgraded for work projects — $3.99/mo is a steal for what you get."</blockquote>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,#f472b6,#db2777)">AK</div>
+          <div>
+            <div class="testi-name">Alex K.</div>
+            <div class="testi-role">Freelance designer</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FAQ ───────────────────────────────────────────────────── -->
+<section class="faq" id="faq">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="badge">Questions</span>
+      <h2>Frequently <span class="grad">asked</span></h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-q">
+          Do I need to create an account to use FlowLane?
+          <div class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+        </button>
+        <div class="faq-a">
+          <div class="faq-a-inner">No account needed at all. Install the extension and start using it immediately. Your first 3 projects are stored locally in your browser — completely private, no sign-in required. You only need a Google account to unlock cloud sync and collaboration features on the Premium plan.</div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">
+          What browsers does FlowLane support?
+          <div class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+        </button>
+        <div class="faq-a">
+          <div class="faq-a-inner">FlowLane supports all Chromium-based browsers: Google Chrome, Microsoft Edge, Brave, and Vivaldi. Any browser that supports the Chrome Web Store extension format will work.</div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">
+          Is my data safe? Who can see my boards?
+          <div class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+        </button>
+        <div class="faq-a">
+          <div class="faq-a-inner">On the free tier, your data stays on your device — only you can access it. On Premium, data is synced to our secure cloud with strict access rules that ensure only you (and collaborators you explicitly invite) can access your boards. We never sell or share your data.</div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">
+          How does team collaboration work?
+          <div class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+        </button>
+        <div class="faq-a">
+          <div class="faq-a-inner">On Premium, you can invite collaborators to any project by email. Each collaborator gets a role: Admin (full control), Editor (can create/edit cards), or Viewer (read-only). Changes sync in real time — everyone sees updates instantly. You can also see who's currently online via live presence indicators.</div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">
+          How much does Premium cost?
+          <div class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+        </button>
+        <div class="faq-a">
+          <div class="faq-a-inner">Premium is $3.99/mo on the monthly plan or $39.99/yr on the annual plan (just $3.33/mo — save 16%). Both plans include unlimited projects, cloud sync across devices, real-time collaboration, and role-based access. You can cancel anytime directly from within the extension.</div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">
+          Can I cancel my Premium subscription anytime?
+          <div class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+        </button>
+        <div class="faq-a">
+          <div class="faq-a-inner">Yes, cancel anytime directly from within the extension — no hoops, no emails required. If you cancel, you'll stay on Premium until the end of your billing period. After that, you'll revert to the free plan. You can export all your data as JSON or CSV at any time before downgrading.</div>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">
+          Will there be a web app version?
+          <div class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+        </button>
+        <div class="faq-a">
+          <div class="faq-a-inner">Yes! The web app is live at <a href="https://app.flowlanekanban.com" style="color:var(--accent2)">app.flowlanekanban.com</a> — use FlowLane on any browser, any device, with no extension to install. Your boards, cards, and Premium features all work seamlessly on the web.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CTA Banner ─────────────────────────────────────────────── -->
+<section class="cta-banner" id="install">
+  <div class="container">
+    <div class="reveal">
+      <span class="badge" style="margin-bottom:24px">Get started today</span>
+      <h2>Stop paying for features<br><span class="grad">you'll never use.</span></h2>
+      <p>Start with a tool that respects your time and your wallet. Free forever, or go Premium for less than a cup of coffee.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <a href="#" class="btn btn-primary btn-lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Add to Chrome — It's Free
+        </a>
+        <a href="#pricing" class="btn btn-outline btn-lg">View pricing</a>
+      </div>
+      <p style="margin-top:20px;font-size:13px;color:var(--text3)">No account required &middot; 3 projects free &middot; Upgrade anytime</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Footer ─────────────────────────────────────────────────── -->
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="#" class="logo">
+          <div class="logo-icon">
+            <img src="./logo.png" alt="FlowLane logo" width="36" height="36" />
+          </div>
+          FlowLane
+        </a>
+        <p>Personal Kanban that lives in your browser. Organize your work, collaborate in real time, and stay in flow.</p>
+      </div>
+      <div class="footer-cols">
+        <div class="footer-col">
+          <h4>Product</h4>
+          <a href="#features">Features</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#how-it-works">How it works</a>
+          <a href="#reviews">Reviews</a>
+          <a href="https://app.flowlanekanban.com" style="color:var(--accent3)">Web App</a>
+        </div>
+        <div class="footer-col">
+          <h4>Support</h4>
+          <a href="#faq">FAQ</a>
+          <a href="mailto:support@flowlanekanban.com">Contact</a>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+        </div>
+        <div class="footer-col">
+          <h4>Install</h4>
+          <a href="#">Chrome Web Store</a>
+          <a href="#">Microsoft Edge Add-ons</a>
+          <a href="#">flowlanekanban.com</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 FlowLane. All rights reserved.</p>
+      <p style="color:var(--text3)">flowlanekanban.com</p>
+    </div>
+  </div>
+</footer>
+
+<!-- ─── JS ────────────────────────────────────────────────────── -->
+<script>
+  // Hamburger menu
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobileMenu');
+  hamburger.addEventListener('click', () => {
+    mobileMenu.classList.toggle('open');
+  });
+  mobileMenu.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => mobileMenu.classList.remove('open'));
+  });
+
+  // Scroll reveal
+  const revealEls = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  revealEls.forEach(el => observer.observe(el));
+
+  // FAQ accordion
+  document.querySelectorAll('.faq-q').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.faq-item');
+      const wasOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!wasOpen) item.classList.add('open');
+    });
+  });
+
+  // Pricing toggle (monthly / annual)
+  const pricingSwitch = document.getElementById('pricingSwitch');
+  const toggleMonthly = document.getElementById('toggleMonthly');
+  const toggleAnnual = document.getElementById('toggleAnnual');
+  const premiumPrice = document.getElementById('premiumPrice');
+  const premiumPeriod = document.getElementById('premiumPeriod');
+  let isAnnual = false;
+
+  pricingSwitch.addEventListener('click', () => {
+    isAnnual = !isAnnual;
+    pricingSwitch.classList.toggle('annual', isAnnual);
+    toggleMonthly.classList.toggle('active', !isAnnual);
+    toggleAnnual.classList.toggle('active', isAnnual);
+
+    // Smooth fade transition
+    premiumPrice.classList.add('price-fade');
+    premiumPeriod.classList.add('price-fade');
+
+    setTimeout(() => {
+      if (isAnnual) {
+        premiumPrice.innerHTML = '<span>$</span>3.33';
+        premiumPeriod.innerHTML = '$39.99 billed annually \u00b7 save 16%';
+      } else {
+        premiumPrice.innerHTML = '<span>$</span>3.99';
+        premiumPeriod.innerHTML = 'per month \u00b7 cancel anytime';
+      }
+      premiumPrice.classList.remove('price-fade');
+      premiumPeriod.classList.remove('price-fade');
+    }, 200);
+  });
+
+  toggleMonthly.addEventListener('click', () => {
+    if (isAnnual) pricingSwitch.click();
+  });
+  toggleAnnual.addEventListener('click', () => {
+    if (!isAnnual) pricingSwitch.click();
+  });
+
+  // Smooth active nav link highlight on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 100) current = s.id;
+    });
+    navLinks.forEach(a => {
+      a.style.color = a.getAttribute('href') === `#${current}` ? 'var(--text)' : '';
+    });
+  }, { passive: true });
+</script>
+</body>
+</html>
