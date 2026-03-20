@@ -494,14 +494,39 @@
             <button class="color-swatch" data-color="#a29bfe" style="background:#a29bfe" type="button"></button>
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="edit-project-status">Status</label>
+        <!-- Project Status (edit mode, admin only) -->
+        <div class="form-group hidden" id="project-edit-status-group">
+          <label class="form-label">
+            Project Status
+            <span class="form-hint">Admin only &middot; triggers audit trail</span>
+          </label>
           <select id="edit-project-status" class="form-input">
-            <option value="active">Active</option>
-            <option value="archived">Archived</option>
+            <option value="new">New</option>
+            <option value="in-progress">In Progress</option>
             <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="deferred">Deferred</option>
           </select>
         </div>
+
+        <!-- Remarks (shown when status is completed/cancelled/deferred) -->
+        <div class="form-group hidden" id="project-edit-remarks-group">
+          <label class="form-label">
+            Remarks
+            <span class="form-hint">Add remarks about this status change</span>
+          </label>
+          <textarea id="edit-project-remarks" class="form-input" placeholder="Add remarks about this status change..." rows="3" maxlength="500"></textarea>
+        </div>
+
+        <!-- Audit Trail (edit mode, premium only) -->
+        <div class="form-group hidden" id="project-edit-audit-group">
+          <label class="form-label">
+            Audit Trail
+            <span class="form-hint">Status change history</span>
+          </label>
+          <div id="project-audit-log" class="project-audit-log"></div>
+        </div>
+
         <div class="form-group">
           <label class="form-label">Collaborators</label>
           <ul id="collaborators-list" class="collaborators-list"></ul>

@@ -20,7 +20,8 @@
 import { onAuthChange, signInWithGoogle, signOut, getCurrentUser } from './auth.js';
 import { upsertUser, listenUser, listenProjects, inviteCollaborator, getProject,
   removeCollaborator, updateCollaboratorRole, getPendingInvites,
-  acceptInvite, syncCollaboratorInfo, updateProjectStatus } from './db.js';
+  acceptInvite, syncCollaboratorInfo, updateProjectStatus,
+  getProjectAuditLog } from './db.js';
 import { configure as configureStorage, getProjects, createProject, updateProject,
   deleteProject, getColumns, getCards, createColumn, deleteColumn,
   migrateLocalToCloud, adoptAnonymousData, setUserRole, canEdit, canAdmin,
@@ -42,6 +43,7 @@ const FREE_LIMIT = 3;
 // Color state managed inline per modal (new-project / edit-project)
 let _newProjectColorPicker = null;
 let _editProjectColorPicker = null;
+let _editProjectColor = '#6c63ff';
 
 let _state = {
   user:             null,
@@ -593,21 +595,105 @@ function openEditProjectModal(project) {
   document.getElementById('edit-project-code').value = project.code ?? '';
   document.getElementById('edit-project-desc').value = project.description ?? '';
 
-  // Set status dropdown
-  const statusSel = document.getElementById('edit-project-status');
-  if (statusSel) statusSel.value = project.status ?? 'active';
-
   // Highlight matching color swatch
   _editProjectColor = project.color ?? '#6c63ff';
   document.querySelectorAll('#edit-project-color-picker .color-swatch').forEach(b => {
     b.classList.toggle('active', b.dataset.color === _editProjectColor);
   });
 
+  // ── Status, Remarks, Audit Trail ──────────────────────────────────────
+  const statusGroup   = document.getElementById('project-edit-status-group');
+  const remarksGroup  = document.getElementById('project-edit-remarks-group');
+  const auditGroup    = document.getElementById('project-edit-audit-group');
+  const statusSelect  = document.getElementById('edit-project-status');
+  const remarksField  = document.getElementById('edit-project-remarks');
+
+  const isAdmin = canAdmin();
+  const currentStatus = project.projectStatus ?? 'new';
+
+  // Show status dropdown (admin only)
+  if (statusGroup) {
+    statusGroup.classList.toggle('hidden', !isAdmin);
+    if (statusSelect) statusSelect.value = currentStatus;
+  }
+
+  // Show/hide remarks based on selected status
+  const toggleRemarks = () => {
+    const sel = statusSelect?.value ?? 'new';
+    const needsRemarks = sel === 'completed' || sel === 'cancelled' || sel === 'deferred';
+    remarksGroup?.classList.toggle('hidden', !needsRemarks || !isAdmin);
+  };
+  statusSelect?.removeEventListener('change', toggleRemarks);
+  statusSelect?.addEventListener('change', toggleRemarks);
+  toggleRemarks();
+
+  // Pre-fill existing remarks
+  if (remarksField) {
+    remarksField.value = project.completionRemarks
+      ?? project.cancellationRemarks
+      ?? project.deferralRemarks
+      ?? '';
+  }
+
+  // Audit Trail — visible for premium users
+  if (auditGroup) auditGroup.classList.toggle('hidden', !isPremiumMode());
+  if (isPremiumMode()) loadProjectAuditLog(project.id);
+
   // Populate collaborators in edit modal
   populateCollaborators(_state.currentProjectId).catch(() => {});
 
   openModal('edit-project');
   setTimeout(() => document.getElementById('edit-project-name')?.focus(), 50);
+}
+
+/** Load and render audit log entries in the edit modal. */
+async function loadProjectAuditLog(projectId) {
+  const logEl = document.getElementById('project-audit-log');
+  if (!logEl) return;
+  logEl.innerHTML = '';
+
+  try {
+    const entries = await getProjectAuditLog(projectId);
+    if (entries.length === 0) {
+      logEl.innerHTML = '<div class="audit-log-empty">No audit entries yet</div>';
+      return;
+    }
+    for (const entry of entries) {
+      const row = document.createElement('div');
+      row.className = 'audit-log-entry';
+
+      const timeEl = document.createElement('span');
+      timeEl.className = 'audit-log-entry__time';
+      const ts = entry.timestamp?.seconds
+        ? new Date(entry.timestamp.seconds * 1000)
+        : (entry.timestamp ? new Date(entry.timestamp) : null);
+      timeEl.textContent = ts ? ts.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—';
+
+      const actionEl = document.createElement('span');
+      actionEl.className = 'audit-log-entry__action';
+
+      const statusLabel = (entry.newStatus ?? '').replace('-', ' ');
+      actionEl.textContent = 'Status changed to ';
+      const statusSpan = document.createElement('span');
+      statusSpan.className = 'audit-log-entry__status';
+      statusSpan.textContent = statusLabel;
+      actionEl.appendChild(statusSpan);
+
+      if (entry.remarks) {
+        const rem = document.createElement('div');
+        rem.style.cssText = 'font-size:10px;color:var(--text-muted);margin-top:1px;font-style:italic';
+        rem.textContent = `"${entry.remarks}"`;
+        actionEl.appendChild(rem);
+      }
+
+      row.appendChild(timeEl);
+      row.appendChild(actionEl);
+      logEl.appendChild(row);
+    }
+  } catch (err) {
+    console.error('[loadAuditLog]', err);
+    logEl.innerHTML = '<div class="audit-log-empty">No audit entries yet</div>';
+  }
 }
 
 /** Derive a suggested code from a project name: first letters of each word, max 5 chars. */
@@ -942,8 +1028,6 @@ function wireStaticButtons() {
 
   // ── Save Project (edit mode) ───────────────────────────────────────────
 
-  let _editProjectColor = '#6c63ff';
-
   document.querySelectorAll('#edit-project-color-picker .color-swatch').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('#edit-project-color-picker .color-swatch').forEach(b => b.classList.remove('active'));
@@ -962,7 +1046,37 @@ function wireStaticButtons() {
 
     try {
       await updateProject(editProjectId, { name, description: desc, color });
+
+      // Handle status change if admin changed it
+      const statusSelect = document.getElementById('edit-project-status');
+      const remarksField = document.getElementById('edit-project-remarks');
       const p = _state.projects.find(x => x.id === editProjectId);
+      const oldStatus = p?.projectStatus ?? 'new';
+      const newStatus = statusSelect?.value ?? oldStatus;
+
+      if (canAdmin() && newStatus !== oldStatus) {
+        const remarks = remarksField?.value?.trim() ?? '';
+        if (_state.tier === 'premium') {
+          await updateProjectStatus(editProjectId, newStatus, remarks, _state.user?.uid ?? null);
+        } else {
+          const statusUpdates = { projectStatus: newStatus };
+          if (newStatus === 'completed') {
+            statusUpdates.completedAt = Date.now();
+            statusUpdates.completionRemarks = remarks;
+          } else if (newStatus === 'cancelled') {
+            statusUpdates.cancelledAt = Date.now();
+            statusUpdates.cancellationRemarks = remarks;
+          } else if (newStatus === 'deferred') {
+            statusUpdates.deferredAt = Date.now();
+            statusUpdates.deferralRemarks = remarks;
+          } else if (newStatus === 'in-progress') {
+            statusUpdates.inProgressAt = Date.now();
+          }
+          await updateProject(editProjectId, statusUpdates);
+        }
+        if (p) p.projectStatus = newStatus;
+      }
+
       if (p) { p.name = name; p.color = color; p.description = desc; }
       renderProjectList();
       document.getElementById('project-btn-label').textContent = name;
