@@ -804,9 +804,6 @@ function wireStaticButtons() {
     updateViewToggle();
   });
 
-  // ── Theme buttons (header toolbar) ──────────────────────────────────────
-  document.getElementById('theme-dark-btn')?.addEventListener('click', () => applyTheme('dark'));
-  document.getElementById('theme-light-btn')?.addEventListener('click', () => applyTheme('light'));
   // ── Theme buttons (settings modal) ────────────────────────────────────
   document.querySelectorAll('.theme-option').forEach(btn => {
     btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
