@@ -2716,6 +2716,41 @@ textarea.form-input {
 /* ══════════════════════════════════════════════
    COLLABORATORS / INVITES
    ══════════════════════════════════════════════ */
+/* ── Audit Trail ───────────────────────────────────── */
+.project-audit-log {
+  max-height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.audit-log-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 4px 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  border-left: 2px solid var(--border);
+  margin-left: 2px;
+}
+.audit-log-entry__time {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 10px;
+  min-width: 70px;
+}
+.audit-log-entry__action { flex: 1; }
+.audit-log-entry__status {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.audit-log-empty {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+
 .collaborators-list {
   display: flex;
   flex-direction: column;

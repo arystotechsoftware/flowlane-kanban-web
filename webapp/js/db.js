@@ -117,7 +117,7 @@ export async function updateProject(projectId, data) {
  * Update project status with date tracking and optional remarks.
  * Only admins should call this (enforced in UI).
  */
-export async function updateProjectStatus(projectId, newStatus, remarks = '') {
+export async function updateProjectStatus(projectId, newStatus, remarks = '', changedByUid = null) {
   const updates = {
     projectStatus: newStatus,
     updatedAt: serverTimestamp(),
@@ -129,11 +129,32 @@ export async function updateProjectStatus(projectId, newStatus, remarks = '') {
   } else if (newStatus === 'cancelled') {
     updates.cancelledAt = serverTimestamp();
     updates.cancellationRemarks = remarks;
+  } else if (newStatus === 'deferred') {
+    updates.deferredAt = serverTimestamp();
+    updates.deferralRemarks = remarks;
   } else if (newStatus === 'in-progress') {
     updates.inProgressAt = serverTimestamp();
   }
 
   await updateDoc(doc(db, 'projects', projectId), updates);
+
+  // Audit trail entry
+  await addDoc(collection(db, 'projects', projectId, 'auditLog'), {
+    action:    'status_change',
+    newStatus,
+    remarks:   remarks || null,
+    changedBy: changedByUid,
+    timestamp: serverTimestamp(),
+  });
+}
+
+export async function getProjectAuditLog(projectId) {
+  const q = query(
+    collection(db, 'projects', projectId, 'auditLog'),
+    orderBy('timestamp', 'desc')
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 export async function deleteProject(projectId) {
