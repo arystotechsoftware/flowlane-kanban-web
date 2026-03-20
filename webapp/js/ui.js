@@ -169,8 +169,13 @@ export function setTierBadge(tier) {
 
 export function applyTheme(theme) {
   document.body.classList.toggle('light', theme === 'light');
+  // Header toolbar buttons
   document.getElementById('theme-dark-btn')?.classList.toggle('active', theme !== 'light');
   document.getElementById('theme-light-btn')?.classList.toggle('active', theme === 'light');
+  // Settings modal buttons
+  document.querySelectorAll('.theme-option').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === theme);
+  });
   localStorage.setItem('theme', theme);
 }
 

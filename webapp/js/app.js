@@ -39,7 +39,7 @@ import { showToast, openModal, closeModal, initModalOverlays,
 const FREE_LIMIT = 3;
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let _projectColorPicker = null;
+// Color state managed inline per modal (new-project / edit-project)
 let _newProjectColorPicker = null;
 let _editProjectColorPicker = null;
 
@@ -589,36 +589,25 @@ function renderProjectList() {
 let _codeAutoSet = true;
 
 function openEditProjectModal(project) {
-  document.getElementById('project-name-input').value = project.name ?? '';
-  document.getElementById('project-desc-input').value = project.description ?? '';
-  document.getElementById('project-modal-title').textContent = 'Edit Project';
-  document.getElementById('save-project-btn').textContent = 'Save Changes';
-  const btn = document.getElementById('save-project-btn');
-  btn.dataset.mode = 'edit';
-  btn.dataset.editProjectId = project.id;
-  _projectColorPicker?.setColor(project.color ?? '#6366f1');
+  document.getElementById('edit-project-name').value = project.name ?? '';
+  document.getElementById('edit-project-code').value = project.code ?? '';
+  document.getElementById('edit-project-desc').value = project.description ?? '';
 
-  // Lock the code field — project codes are permanent once created
-  const codeInput = document.getElementById('project-code-input');
-  if (codeInput) {
-    codeInput.value = project.code ?? '';
-    codeInput.readOnly = true;
-    codeInput.classList.add('form-input--locked');
-  }
-  updateCodePreview(project.code ?? '');
-  _codeAutoSet = false;
+  // Set status dropdown
+  const statusSel = document.getElementById('edit-project-status');
+  if (statusSel) statusSel.value = project.status ?? 'active';
 
-  // Swap hint text to show the lock message
-  const hintCreate = document.getElementById('project-code-hint-create');
-  const hintEdit   = document.getElementById('project-code-hint-edit');
-  if (hintCreate) hintCreate.classList.add('hidden');
-  if (hintEdit)   hintEdit.classList.remove('hidden');
+  // Highlight matching color swatch
+  _editProjectColor = project.color ?? '#6c63ff';
+  document.querySelectorAll('#edit-project-color-picker .color-swatch').forEach(b => {
+    b.classList.toggle('active', b.dataset.color === _editProjectColor);
+  });
 
   // Populate collaborators in edit modal
   populateCollaborators(_state.currentProjectId).catch(() => {});
 
-  openModal('project');
-  setTimeout(() => document.getElementById('project-name-input')?.focus(), 50);
+  openModal('edit-project');
+  setTimeout(() => document.getElementById('edit-project-name')?.focus(), 50);
 }
 
 /** Derive a suggested code from a project name: first letters of each word, max 5 chars. */
@@ -631,11 +620,7 @@ function suggestCode(name) {
     .slice(0, 5) || 'PRJ';
 }
 
-function updateCodePreview(code) {
-  const clean = code.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6);
-  const preview = document.getElementById('project-code-preview');
-  if (preview) preview.textContent = clean || 'PRJ';
-}
+// updateCodePreview removed — no longer needed with separate modals
 
 // ══════════════════════════════════════════════════════════════════════════════
 // BOARD LOADING
@@ -691,6 +676,7 @@ function wireStaticButtons() {
     const swimlane = getSwimlaneMode();
     document.getElementById('view-board-btn')?.classList.toggle('view-toggle-btn--active', !swimlane);
     document.getElementById('view-swimlane-btn')?.classList.toggle('view-toggle-btn--active', swimlane);
+    document.getElementById('swimlane-toggle-btn')?.classList.toggle('active', swimlane);
     const dvSel = document.getElementById('default-view-select');
     if (dvSel) dvSel.value = swimlane ? 'swimlane' : 'board';
   }
@@ -714,9 +700,13 @@ function wireStaticButtons() {
     updateViewToggle();
   });
 
-  // ── Theme buttons ───────────────────────────────────────────────────────
+  // ── Theme buttons (header toolbar) ──────────────────────────────────────
   document.getElementById('theme-dark-btn')?.addEventListener('click', () => applyTheme('dark'));
   document.getElementById('theme-light-btn')?.addEventListener('click', () => applyTheme('light'));
+  // ── Theme buttons (settings modal) ────────────────────────────────────
+  document.querySelectorAll('.theme-option').forEach(btn => {
+    btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+  });
 
   // ── Search ──────────────────────────────────────────────────────────────
 
@@ -867,10 +857,20 @@ function wireStaticButtons() {
 
   // ── New Project ─────────────────────────────────────────────────────────
 
+  let _newProjectColor = '#6c63ff';
+
+  // Color picker for new-project modal
+  document.querySelectorAll('#new-project-color-picker .color-swatch').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#new-project-color-picker .color-swatch').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      _newProjectColor = btn.dataset.color;
+    });
+  });
+
   document.getElementById('new-project-btn')?.addEventListener('click', () => {
     document.getElementById('project-dropdown')?.classList.add('hidden');
 
-    // In downgrade mode, creating new boards requires a premium subscription
     if (_state.isDowngraded) {
       document.getElementById('upgrade-note').textContent =
         'Upgrade to Premium to create unlimited boards.';
@@ -878,124 +878,113 @@ function wireStaticButtons() {
       return;
     }
 
-    document.getElementById('project-name-input').value = '';
-    document.getElementById('project-desc-input').value = '';
-    updateCodePreview('');
-    document.getElementById('project-modal-title').textContent = 'New Project';
-    const btn = document.getElementById('save-project-btn');
-    btn.textContent = 'Create Project';
-    btn.dataset.mode = 'create';
-    delete btn.dataset.editProjectId;
-    _projectColorPicker?.setColor('#6366f1');
+    document.getElementById('new-project-name').value = '';
+    document.getElementById('new-project-code').value = '';
+    document.getElementById('new-project-desc').value = '';
+    _newProjectColor = '#6c63ff';
+    document.querySelectorAll('#new-project-color-picker .color-swatch').forEach(b => b.classList.remove('active'));
+    document.querySelector('#new-project-color-picker .color-swatch[data-color="#6c63ff"]')?.classList.add('active');
 
-    // Unlock code field for create mode
-    const codeInput = document.getElementById('project-code-input');
-    if (codeInput) {
-      codeInput.value = '';
-      codeInput.readOnly = false;
-      codeInput.classList.remove('form-input--locked');
-    }
-    _codeAutoSet = true;
-
-    const hintCreate = document.getElementById('project-code-hint-create');
-    const hintEdit   = document.getElementById('project-code-hint-edit');
-    if (hintCreate) hintCreate.classList.remove('hidden');
-    if (hintEdit)   hintEdit.classList.add('hidden');
-
-    openModal('project');
-    setTimeout(() => document.getElementById('project-name-input')?.focus(), 50);
+    openModal('new-project');
+    setTimeout(() => document.getElementById('new-project-name')?.focus(), 50);
   });
 
-  // Auto-suggest code from name while typing
-  document.getElementById('project-name-input')?.addEventListener('input', (e) => {
-    if (_codeAutoSet) {
-      const suggested = suggestCode(e.target.value);
-      const codeInput = document.getElementById('project-code-input');
-      if (codeInput) codeInput.value = suggested;
-      updateCodePreview(suggested);
+  // Auto-suggest code from name
+  document.getElementById('new-project-name')?.addEventListener('input', (e) => {
+    const codeInput = document.getElementById('new-project-code');
+    if (codeInput && !codeInput.dataset.manual) {
+      codeInput.value = suggestCode(e.target.value);
     }
   });
 
-  document.getElementById('project-code-input')?.addEventListener('input', (e) => {
+  document.getElementById('new-project-code')?.addEventListener('input', (e) => {
     const clean = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6);
     e.target.value = clean;
-    updateCodePreview(clean);
-    _codeAutoSet = clean === '';
+    e.target.dataset.manual = clean ? 'true' : '';
   });
 
-  _projectColorPicker = initColorPicker('project-color-picker', () => {});
+  // ── Create Project Button ──────────────────────────────────────────────
 
-  // ── Save Project (create or edit) ───────────────────────────────────────
-
-  document.getElementById('save-project-btn')?.addEventListener('click', async () => {
-    const name  = document.getElementById('project-name-input').value.trim();
-    const code  = (document.getElementById('project-code-input')?.value ?? '')
+  document.getElementById('create-project-btn')?.addEventListener('click', async () => {
+    const name  = document.getElementById('new-project-name').value.trim();
+    const code  = (document.getElementById('new-project-code')?.value ?? '')
                     .toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6);
-    const desc  = document.getElementById('project-desc-input')?.value.trim() ?? '';
-    const color = _projectColorPicker?.getColor() ?? '#6366f1';
+    const desc  = document.getElementById('new-project-desc')?.value.trim() ?? '';
+    const color = _newProjectColor;
 
     if (!name) { showToast('Project name is required', 'warning'); return; }
     if (code.length < 2) { showToast('Project code must be at least 2 letters', 'warning'); return; }
 
-    const btn           = document.getElementById('save-project-btn');
-    const mode          = btn.dataset.mode ?? 'create';
-    const editProjectId = btn.dataset.editProjectId ?? _state.currentProjectId;
-
-    // Uniqueness check for code (create mode only)
-    if (mode === 'create') {
-      const duplicate = _state.projects.find(
-        (p) => (p.code ?? '').toUpperCase() === code,
-      );
-      if (duplicate) {
-        showToast(`Code "${code}" is already used by "${duplicate.name}" — choose a different code`, 'warning');
-        document.getElementById('project-code-input')?.focus();
-        return;
-      }
+    const duplicate = _state.projects.find(p => (p.code ?? '').toUpperCase() === code);
+    if (duplicate) {
+      showToast(`Code "${code}" is already used by "${duplicate.name}"`, 'warning');
+      return;
     }
 
     try {
-      if (mode === 'create') {
-        const id = await createProject({ name, code, description: desc, color });
-        _state.projects.push({ id, name, code, color });
-        renderProjectList();
-        await selectProject(id);
-        showToast(`Project "${name}" created`, 'success');
-      } else {
-        await updateProject(editProjectId, { name, description: desc, color });
-        const p = _state.projects.find((x) => x.id === editProjectId);
-        if (p) { p.name = name; p.color = color; p.description = desc; }
-        renderProjectList();
-        if (editProjectId === _state.currentProjectId) {
-          const nameEl = document.getElementById('current-project-name');
-          if (nameEl) nameEl.textContent = name;
-        }
-        showToast('Project updated', 'success');
-      }
-      closeModal('project');
+      const id = await createProject({ name, code, description: desc, color });
+      _state.projects.push({ id, name, code, color });
+      renderProjectList();
+      await selectProject(id);
+      showToast(`Project "${name}" created`, 'success');
+      closeModal('new-project');
     } catch (err) {
       if (err.message === 'FREE_LIMIT') {
-        closeModal('project');
+        closeModal('new-project');
         openModal('upgrade');
         document.getElementById('upgrade-note').textContent =
           'You have reached the 3-project limit. Upgrade to create unlimited projects.';
       } else {
-        showToast('Failed to save project', 'error');
+        showToast('Failed to create project', 'error');
       }
+    }
+  });
+
+  // ── Save Project (edit mode) ───────────────────────────────────────────
+
+  let _editProjectColor = '#6c63ff';
+
+  document.querySelectorAll('#edit-project-color-picker .color-swatch').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#edit-project-color-picker .color-swatch').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      _editProjectColor = btn.dataset.color;
+    });
+  });
+
+  document.getElementById('save-project-btn')?.addEventListener('click', async () => {
+    const editProjectId = _state.currentProjectId;
+    const name  = document.getElementById('edit-project-name').value.trim();
+    const desc  = document.getElementById('edit-project-desc')?.value.trim() ?? '';
+    const color = _editProjectColor;
+
+    if (!name) { showToast('Project name is required', 'warning'); return; }
+
+    try {
+      await updateProject(editProjectId, { name, description: desc, color });
+      const p = _state.projects.find(x => x.id === editProjectId);
+      if (p) { p.name = name; p.color = color; p.description = desc; }
+      renderProjectList();
+      document.getElementById('project-btn-label').textContent = name;
+      showToast('Project updated', 'success');
+      closeModal('edit-project');
+    } catch (err) {
+      showToast('Failed to save project', 'error');
     }
   });
 
   // ── Delete Project ──────────────────────────────────────────────────────
 
-  document.getElementById('delete-project-btn')?.addEventListener('click', async () => {
-    const p = _state.projects.find((x) => x.id === _state.currentProjectId);
+  async function handleDeleteProject(closeModalName) {
+    const p = _state.projects.find(x => x.id === _state.currentProjectId);
     if (!p) return;
     if (!confirm(`Delete project "${p.name}" and all its data? This cannot be undone.`)) return;
 
     try {
       await deleteProject(_state.currentProjectId);
-      _state.projects = _state.projects.filter((x) => x.id !== _state.currentProjectId);
+      _state.projects = _state.projects.filter(x => x.id !== _state.currentProjectId);
       renderProjectList();
-      closeModal('settings');
+      closeModal(closeModalName);
 
       if (_state.projects.length > 0) {
         await selectProject(_state.projects[0].id);
@@ -1006,7 +995,12 @@ function wireStaticButtons() {
     } catch (err) {
       showToast('Failed to delete project', 'error');
     }
-  });
+  }
+
+  // Delete from edit-project modal
+  document.getElementById('delete-project-btn')?.addEventListener('click', () => handleDeleteProject('edit-project'));
+  // Delete from settings modal
+  document.getElementById('settings-delete-project-btn')?.addEventListener('click', () => handleDeleteProject('settings'));
 
   // ── Upgrade Modal ───────────────────────────────────────────────────────
 

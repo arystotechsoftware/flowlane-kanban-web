@@ -1595,6 +1595,8 @@ input, textarea, select, button {
   flex-shrink: 0;
 }
 
+.modal-footer-split { justify-content: space-between; }
+
 
 /* ── Card Modal Layout ── */
 .modal-card-body {
@@ -3112,18 +3114,9 @@ body.light .locked-overlay {
 /* ══════════════════════════════════════════════
    SWIMLANE BOARD
    ══════════════════════════════════════════════ */
-/* Swimlane wrapper scrolling */
-.board-wrapper:has(.board--swimlane) {
-  overflow: auto;
-}
-
-.board-wrapper:has(.board--swimlane) .board.board--swimlane {
-  overflow: visible;
-  min-width: max-content;
-  flex: none;
-}
-
-.board.board--swimlane {
+/* Swimlane wrapper scrolling –
+   #board is .board-wrapper itself; use ID selector to beat #board specificity */
+#board.board--swimlane {
   display: block;
   overflow-x: auto;
   overflow-y: auto;
