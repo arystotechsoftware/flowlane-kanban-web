@@ -554,7 +554,11 @@ input, textarea, select, button {
 
 
 /* ── Project Selector ── */
-.project-selector { position: relative; }
+.project-selector {
+  position: relative;
+  min-width: 320px;
+  max-width: 700px;
+}
 
 .project-btn {
   display: flex;
@@ -569,8 +573,7 @@ input, textarea, select, button {
   font-weight: 500;
   cursor: pointer;
   transition: var(--trans);
-  max-width: 700px;
-  min-width: 320px;
+  width: 100%;
 }
 
 .project-btn:hover { background: var(--bg-hover); }
@@ -3550,7 +3553,7 @@ body.light .locked-overlay {
     width: 280px;
   }
 
-  .project-btn {
+  .project-selector {
     min-width: 320px;
     max-width: 700px;
   }
