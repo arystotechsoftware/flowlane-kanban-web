@@ -237,10 +237,8 @@ input, textarea, select, button {
 }
 
 .brand-name {
-  background: linear-gradient(135deg, var(--accent), #8b5cf6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
+  font-weight: 700;
 }
 
 .auth-tagline {
@@ -1534,7 +1532,7 @@ input, textarea, select, button {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.modal-sm { max-width: 460px; padding: 24px; }
+.modal-sm { max-width: 460px; }
 .modal-card { max-width: 880px; }
 
 .modal-header {
@@ -1547,10 +1545,9 @@ input, textarea, select, button {
 }
 
 .modal-title {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 20px;
 }
 
 .modal-subtitle {
@@ -1572,9 +1569,8 @@ input, textarea, select, button {
   color: var(--text-secondary);
   cursor: pointer;
   transition: var(--trans);
-  position: absolute;
-  top: 14px;
-  right: 16px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .modal-close:hover,
@@ -2906,6 +2902,14 @@ textarea.form-input {
   color: var(--text-secondary);
   flex: 1;
 }
+
+/* Column add row */
+.column-add-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.column-add-row .form-input { flex: 1; }
 
 /* Import / export */
 .import-export-row {

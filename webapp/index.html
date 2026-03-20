@@ -510,58 +510,123 @@
   <!-- ── SETTINGS MODAL ── -->
   <div id="settings-modal" class="modal-overlay hidden" data-modal="settings">
     <div class="modal modal-sm">
-      <button class="modal-close-btn" data-close="settings" type="button" aria-label="Close">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-      <h2 class="modal-title">Settings</h2>
-
-      <!-- Theme -->
-      <div class="settings-section">
-        <h4>Theme</h4>
-        <div class="theme-picker">
-          <button class="theme-option active" data-theme="dark" type="button">Dark</button>
-          <button class="theme-option" data-theme="light" type="button">Light</button>
-        </div>
-      </div>
-
-      <!-- Columns -->
-      <div class="settings-section">
-        <h4>Columns</h4>
-        <div class="column-add-row">
-          <input id="new-column-name" type="text" placeholder="New column name&hellip;" maxlength="30" />
-          <button id="add-column-btn" class="btn btn-sm btn-primary" type="button">Add Column</button>
-        </div>
-      </div>
-
-      <!-- Export -->
-      <div id="export-section" class="settings-section">
-        <h4>Export Data</h4>
-        <button id="export-json-btn" class="btn btn-sm btn-ghost" type="button">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Export JSON
+      <div class="modal-header">
+        <h2 class="modal-title">Settings</h2>
+        <button class="modal-close-btn" data-close="settings" type="button" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
+      <div class="modal-body">
+        <!-- Organization Name -->
+        <div class="settings-section">
+          <label class="form-label">
+            Organization / Business Name
+            <span class="form-hint">Optional &middot; shown in the app header</span>
+          </label>
+          <input type="text" id="org-name-input" class="form-input" placeholder="e.g. Acme Corp" maxlength="40" />
+        </div>
 
-      <!-- Import -->
-      <div class="settings-section">
-        <h4>Import Data</h4>
-        <button id="import-json-btn" class="btn btn-sm btn-ghost" type="button">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Import JSON
-        </button>
-        <input id="import-file-input" type="file" accept=".json" class="hidden" />
-      </div>
-
-      <!-- Storage -->
-      <div class="settings-section">
-        <h4>Storage</h4>
-        <div id="storage-usage-display" class="storage-usage-display">
-          <div class="storage-bar-wrap">
-            <div class="storage-bar" style="width:0%"></div>
+        <!-- Theme -->
+        <div class="settings-section">
+          <label class="form-label">Theme</label>
+          <div class="theme-picker">
+            <button class="theme-option active" data-theme="dark" type="button">Dark</button>
+            <button class="theme-option" data-theme="light" type="button">Light</button>
           </div>
-          <span class="storage-text">Calculating&hellip;</span>
         </div>
-        <button id="buy-storage-btn" class="btn btn-sm btn-ghost hidden" type="button">Buy More Storage</button>
+
+        <!-- Default View -->
+        <div class="settings-section">
+          <label class="form-label">Default View</label>
+          <select id="default-view-select" class="form-input">
+            <option value="board">Board View (Kanban columns)</option>
+            <option value="swimlane">Swimlane View (grouped by status)</option>
+          </select>
+        </div>
+
+        <!-- Project Management -->
+        <div class="settings-section">
+          <label class="form-label">
+            Project Management
+            <span class="form-hint">Search &amp; browse all projects</span>
+          </label>
+          <button class="btn-ghost" id="browse-projects-btn" type="button" style="width:100%">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+            Browse All Projects
+          </button>
+        </div>
+
+        <!-- Current Project Status -->
+        <div class="settings-section" id="project-status-section">
+          <label class="form-label">
+            Current Project Status
+            <span class="form-hint">Only project admins can change status</span>
+          </label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="current-project-status-badge" class="plan-badge" style="background:var(--accent)">New</span>
+            <button class="btn-ghost btn-sm" id="change-project-status-btn" type="button" style="display:none">Change Status</button>
+          </div>
+        </div>
+
+        <!-- Columns -->
+        <div class="settings-section">
+          <label class="form-label">Columns</label>
+          <div class="column-add-row">
+            <input id="new-column-name" type="text" class="form-input" placeholder="New column name&hellip;" maxlength="30" />
+            <button id="add-column-btn" class="btn btn-sm btn-primary" type="button">Add Column</button>
+          </div>
+        </div>
+
+        <!-- Cloud Storage -->
+        <div class="settings-section hidden" id="storage-section">
+          <label class="form-label">
+            Cloud Storage
+            <span class="form-hint">Attachments &amp; cover images</span>
+          </label>
+          <div class="storage-bar-wrap">
+            <div class="storage-bar">
+              <div id="storage-bar-fill" class="storage-bar-fill" style="width:0%"></div>
+            </div>
+            <div class="storage-usage-row">
+              <span id="storage-used-text" class="storage-used-text">Calculating&hellip;</span>
+              <button class="btn-ghost btn-sm" id="buy-storage-btn" type="button">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:3px;vertical-align:middle"><path d="M12 5v14M5 12h14"/></svg>
+                Buy +1 GB &middot; $9.99
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Export / Import -->
+        <div id="export-section" class="settings-section">
+          <label class="form-label">Export Your Data</label>
+          <div class="import-export-row">
+            <button id="export-json-btn" class="btn-ghost" type="button">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export JSON
+            </button>
+          </div>
+          <label class="form-label" style="margin-top:14px">Import Data</label>
+          <div class="import-export-row">
+            <button id="import-json-btn" class="btn-ghost" type="button">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Import JSON
+            </button>
+            <input id="import-file-input" type="file" accept=".json" class="hidden" />
+          </div>
+          <p style="font-size:11px;color:var(--text-muted);margin-top:6px">Imports all projects from a FlowLane JSON export. Existing data is kept.</p>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="settings-section danger-zone">
+          <label class="form-label">Danger Zone</label>
+          <button class="btn-danger-sm" id="delete-project-btn" type="button">Delete Current Project</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="settings-done-btn" data-close="settings" type="button">Done</button>
       </div>
     </div>
   </div>
@@ -569,34 +634,45 @@
   <!-- ── UPGRADE MODAL ── -->
   <div id="upgrade-modal" class="modal-overlay hidden" data-modal="upgrade">
     <div class="modal modal-sm">
-      <button class="modal-close-btn" data-close="upgrade" type="button" aria-label="Close">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-      <h2 class="modal-title">Upgrade to Premium</h2>
-      <p class="modal-subtitle">Unlock unlimited projects, real-time collaboration, attachments, and more.</p>
-
-      <div class="plan-options">
-        <label class="plan-option selected">
-          <input type="radio" name="plan" value="monthly" checked />
-          <div class="plan-card">
-            <span class="plan-name">Monthly</span>
-            <span class="plan-price">$3.99<small>/mo</small></span>
-          </div>
-          <button id="select-monthly-btn" class="btn btn-sm btn-ghost" type="button">Select</button>
-        </label>
-        <label class="plan-option">
-          <input type="radio" name="plan" value="annual" />
-          <div class="plan-card">
-            <span class="plan-name">Annual</span>
-            <span class="plan-price">$39.99<small>/yr</small></span>
-            <span class="plan-badge">Save 17%</span>
-          </div>
-          <button id="select-annual-btn" class="btn btn-sm btn-ghost" type="button">Select</button>
-        </label>
+      <div class="modal-header">
+        <h2 class="modal-title">Upgrade to Premium</h2>
+        <button class="modal-close-btn" data-close="upgrade" type="button" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
-
+      <div class="modal-body upgrade-body" style="text-align:left">
+        <ul class="upgrade-features">
+          <li><span class="check">&#10003;</span> Unlimited projects &amp; boards</li>
+          <li><span class="check">&#10003;</span> Sync across all your devices</li>
+          <li><span class="check">&#10003;</span> Real-time collaboration</li>
+          <li><span class="check">&#10003;</span> Presence indicators</li>
+          <li><span class="check">&#10003;</span> Comments on cards</li>
+          <li><span class="check">&#10003;</span> Card cover images &amp; attachments</li>
+          <li><span class="check">&#10003;</span> Priority support</li>
+        </ul>
+        <div class="plan-selector">
+          <div class="plan-card active" id="plan-monthly" data-plan="monthly">
+            <div class="plan-name">Monthly</div>
+            <div class="plan-price">
+              <span class="price-amount" style="font-size:22px">$3.99</span><span class="price-period">/mo</span>
+            </div>
+          </div>
+          <div class="plan-card" id="plan-annual" data-plan="annual">
+            <div class="plan-name">Annual <span class="plan-badge">Save 17%</span></div>
+            <div class="plan-price">
+              <span class="price-amount" style="font-size:22px">$39.99</span><span class="price-period">/yr</span>
+            </div>
+            <div class="plan-note">$3.33 / month</div>
+          </div>
+        </div>
+        <p class="upgrade-note" id="upgrade-note">Sign in with Google to upgrade.</p>
+      </div>
       <div class="modal-footer">
-        <button id="checkout-btn" class="btn btn-primary btn-block" type="button">Continue to Checkout</button>
+        <button class="btn-ghost" data-close="upgrade" type="button">Maybe later</button>
+        <button class="btn-upgrade-cta" id="checkout-btn" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Upgrade Now
+        </button>
       </div>
     </div>
   </div>

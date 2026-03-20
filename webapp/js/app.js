@@ -1169,6 +1169,16 @@ function wireStaticButtons() {
     }
   });
 
+  // ── Org Name ────────────────────────────────────────────────────────────
+  const orgInput = document.getElementById('org-name-input');
+  if (orgInput) {
+    orgInput.value = localStorage.getItem('flowlane_orgName') || '';
+    orgInput.addEventListener('change', () => {
+      const val = orgInput.value.trim();
+      localStorage.setItem('flowlane_orgName', val);
+    });
+  }
+
   // ── Settings Done ───────────────────────────────────────────────────────
   document.getElementById('settings-done-btn')?.addEventListener('click', () => {
     closeModal('settings');
