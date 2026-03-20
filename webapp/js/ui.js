@@ -154,15 +154,18 @@ export function setTierBadge(tier) {
   const badge = document.getElementById('tier-badge');
   if (!badge) return;
 
+  const billingBtn = document.getElementById('manage-billing-btn');
+  const inviteBtn  = document.getElementById('invite-btn');
+
   if (tier === 'premium') {
     badge.textContent = '\u26A1 Premium';
     badge.classList.add('premium');
-    document.getElementById('manage-billing-btn')?.style.setProperty('display', '');
-    document.getElementById('invite-btn')?.style.setProperty('display', '');
+    if (billingBtn) { billingBtn.classList.remove('hidden'); billingBtn.style.display = ''; }
+    if (inviteBtn)  { inviteBtn.classList.remove('hidden');  inviteBtn.style.display = ''; }
   } else {
     badge.textContent = 'Free';
     badge.classList.remove('premium');
-    document.getElementById('manage-billing-btn')?.style.setProperty('display', 'none');
+    if (billingBtn) { billingBtn.classList.add('hidden'); billingBtn.style.display = 'none'; }
   }
 }
 

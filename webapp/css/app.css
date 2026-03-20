@@ -191,7 +191,8 @@ input, textarea, select, button {
 /* ══════════════════════════════════════════════
    AUTH SCREEN
    ══════════════════════════════════════════════ */
-#auth-screen {
+#auth-screen,
+#premium-wall {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -202,6 +203,7 @@ input, textarea, select, button {
   width: 100%;
   max-width: 440px;
   padding: 24px;
+  text-align: center;
 }
 
 .auth-card {
