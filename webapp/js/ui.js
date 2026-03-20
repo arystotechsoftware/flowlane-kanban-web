@@ -123,28 +123,31 @@ export function initColorPicker(containerId, onChange) {
 export function setUserAvatar(user) {
   const img      = document.getElementById('user-avatar');
   const fallback = document.getElementById('user-avatar-fallback');
+  const dropImg  = document.getElementById('user-avatar-dropdown');
+
+  const initial = (user?.displayName ?? user?.email ?? 'G').charAt(0).toUpperCase();
 
   if (user?.photoURL) {
-    img.src = user.photoURL;
-    img.style.display = '';
-    fallback.style.display = 'none';
+    if (img)     { img.src = user.photoURL; img.classList.remove('hidden'); img.style.display = ''; }
+    if (dropImg) { dropImg.src = user.photoURL; dropImg.classList.remove('hidden'); dropImg.style.display = ''; }
+    if (fallback) fallback.style.display = 'none';
   } else {
-    img.style.display = 'none';
-    fallback.style.display = '';
-    fallback.textContent = (user?.displayName ?? user?.email ?? 'G').charAt(0).toUpperCase();
+    if (img)      { img.classList.add('hidden'); img.style.display = 'none'; }
+    if (dropImg)  { dropImg.classList.add('hidden'); dropImg.style.display = 'none'; }
+    if (fallback) { fallback.style.display = ''; fallback.textContent = initial; }
   }
 
-  document.getElementById('user-display-name').textContent =
-    user?.displayName ?? user?.email ?? 'Guest';
-  document.getElementById('user-email-display').textContent =
-    user?.email ?? '';
+  const nameEl  = document.getElementById('user-display-name');
+  const emailEl = document.getElementById('user-email-display');
+  if (nameEl)  nameEl.textContent  = user?.displayName ?? user?.email ?? 'Guest';
+  if (emailEl) emailEl.textContent = user?.email ?? '';
 
   // Show Sign Out only for real Firebase users; show Sign In for guests/anonymous.
   const isSignedIn = !!(user?.uid && user.uid !== 'local');
   const signOutBtn    = document.getElementById('sign-out-btn');
   const signInMenuBtn = document.getElementById('sign-in-menu-btn');
-  if (signOutBtn)    signOutBtn.style.display    = isSignedIn ? '' : 'none';
-  if (signInMenuBtn) signInMenuBtn.style.display = isSignedIn ? 'none' : '';
+  if (signOutBtn)    { signOutBtn.classList.toggle('hidden', !isSignedIn); signOutBtn.style.display = isSignedIn ? '' : 'none'; }
+  if (signInMenuBtn) { signInMenuBtn.classList.toggle('hidden', isSignedIn); signInMenuBtn.style.display = isSignedIn ? 'none' : ''; }
 }
 
 export function setTierBadge(tier) {

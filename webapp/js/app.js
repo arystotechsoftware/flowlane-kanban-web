@@ -10,14 +10,12 @@
  * Key differences from the Chrome extension popup.js:
  *  - No chrome.* API calls — uses localStorage / window.open instead
  *  - No i18n module — inline English strings
- *  - No analytics module
  *  - No import module (inline implementation)
  *  - No open-window functionality
- *  - No org-name feature
  *  - Auth button IDs: 'google-sign-in-btn' and 'skip-auth-btn'
  */
 
-import { onAuthChange, signInWithGoogle, signOut, getCurrentUser } from './auth.js';
+import { onAuthChange, signInWithGoogle, signOut, getCurrentUser, handleRedirectResult } from './auth.js';
 import { upsertUser, listenUser, listenProjects, inviteCollaborator, getProject,
   removeCollaborator, updateCollaboratorRole, getPendingInvites,
   acceptInvite, syncCollaboratorInfo, updateProjectStatus,
@@ -27,7 +25,8 @@ import { configure as configureStorage, getProjects, createProject, updateProjec
   migrateLocalToCloud, adoptAnonymousData, setUserRole, canEdit, canAdmin,
   getStorageUsage, isPremiumMode } from './storage.js';
 import { renderBoard, clearFilters, setSwimlaneMode, getSwimlaneMode, loadSwimlanePref,
-  searchCards } from './board.js';
+  searchCards, getAnalyticsData } from './board.js';
+import { renderAnalytics } from './analytics.js';
 import { startListening, stopListening } from './collaboration.js';
 import { startCheckout, openBillingPortal, purchaseStorageAddon } from './paddle.js';
 import { exportToJSON } from './export.js';
@@ -109,6 +108,22 @@ async function handleSignIn(user) {
   } catch (_) { /* Firebase not yet configured — ok */ }
 
   setUserAvatar(user);
+
+  // Load org name from Firestore (fall back to localStorage)
+  try {
+    const { getUser } = await import('./db.js');
+    const userData = await getUser(user.uid);
+    if (userData?.orgName) {
+      localStorage.setItem('flowlane_orgName', userData.orgName);
+      applyOrgName(userData.orgName);
+      const orgInput = document.getElementById('org-name-input');
+      if (orgInput) orgInput.value = userData.orgName;
+    } else {
+      applyOrgName(localStorage.getItem('flowlane_orgName') || '');
+    }
+  } catch (_) {
+    applyOrgName(localStorage.getItem('flowlane_orgName') || '');
+  }
 
   // Stay on loading screen while we determine the subscription tier
   show('loading-screen');
@@ -394,9 +409,10 @@ async function selectProject(projectId) {
   _state.currentProjectId  = projectId;
   window._currentProjectId = projectId;
 
-  // Clear board filters and search when switching projects
+  // Clear board filters, search, and close analytics when switching projects
   clearFilters();
   window._clearSearch?.();
+  window._closeAnalytics?.();
 
   // Update project button label with status
   const project = _state.projects.find((p) => p.id === projectId);
@@ -877,6 +893,39 @@ function wireStaticButtons() {
     loadStorageUsage().catch(() => {});
   });
 
+  // ── Analytics ───────────────────────────────────────────────────────────
+  const analyticsBtn   = document.getElementById('analytics-btn');
+  const analyticsView  = document.getElementById('analytics-view');
+  const analyticsClose = document.getElementById('analytics-close-btn');
+  const boardWrapper   = document.getElementById('board');
+
+  function openAnalytics() {
+    const { columns, cardsByColumn } = getAnalyticsData();
+    const projName = document.getElementById('project-btn-label')?.textContent ?? '';
+    const nameEl   = document.getElementById('analytics-project-name');
+    if (nameEl) nameEl.textContent = projName;
+    renderAnalytics({ columns, cardsByColumn });
+    if (boardWrapper)  boardWrapper.style.display  = 'none';
+    if (analyticsView) analyticsView.style.display = 'flex';
+    analyticsBtn?.classList.add('analytics-active');
+  }
+
+  function closeAnalytics() {
+    if (analyticsView) analyticsView.style.display = 'none';
+    if (boardWrapper)  boardWrapper.style.display  = '';
+    analyticsBtn?.classList.remove('analytics-active');
+  }
+
+  analyticsBtn?.addEventListener('click', () => {
+    const isOpen = analyticsView?.style.display !== 'none';
+    isOpen ? closeAnalytics() : openAnalytics();
+  });
+
+  analyticsClose?.addEventListener('click', closeAnalytics);
+
+  // Expose for use when switching projects
+  window._closeAnalytics = closeAnalytics;
+
   // ── Hamburger / Sidebar (mobile) ────────────────────────────────────────
   document.getElementById('hamburger-btn')?.addEventListener('click', () => {
     const sidebar = document.getElementById('sidebar')
@@ -1264,9 +1313,14 @@ function wireStaticButtons() {
   const orgInput = document.getElementById('org-name-input');
   if (orgInput) {
     orgInput.value = localStorage.getItem('flowlane_orgName') || '';
-    orgInput.addEventListener('change', () => {
+    orgInput.addEventListener('change', async () => {
       const val = orgInput.value.trim();
       localStorage.setItem('flowlane_orgName', val);
+      applyOrgName(val);
+      // Persist to Firestore so it syncs across devices
+      if (_state.user?.uid) {
+        try { await upsertUser(_state.user.uid, { orgName: val }); } catch (_) {}
+      }
     });
   }
 
@@ -1515,14 +1569,35 @@ async function populateCollaborators(projectId) {
 
     container.innerHTML = '';
 
+    const collabNames = project?.collaboratorNames ?? {};
+
     for (const [uid, role] of Object.entries(collabs)) {
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-color)';
 
+      // Avatar
+      const info = collabNames[uid];
+      const avatarEl = document.createElement('div');
+      avatarEl.style.cssText = 'width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;background:var(--accent);overflow:hidden';
+      if (info?.photoURL) {
+        const img = document.createElement('img');
+        img.src = info.photoURL;
+        img.alt = info.name ?? '';
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+        avatarEl.appendChild(img);
+      } else {
+        avatarEl.textContent = ((info?.name ?? info?.email ?? uid).charAt(0) ?? '?').toUpperCase();
+      }
+      row.appendChild(avatarEl);
+
       const nameSpan = document.createElement('span');
       nameSpan.style.flex = '1';
       nameSpan.style.fontSize = '13px';
-      nameSpan.textContent = uid === (_state.user?.uid ?? '') ? 'You' : uid.slice(0, 12) + '...';
+      const isMe = uid === (_state.user?.uid ?? '');
+      const displayName = isMe
+        ? 'You'
+        : (info?.name ?? info?.email ?? uid.slice(0, 12) + '...');
+      nameSpan.textContent = displayName;
       row.appendChild(nameSpan);
 
       if (isAdmin) {
@@ -1634,6 +1709,20 @@ function formatBytes(bytes) {
 // ══════════════════════════════════════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════════════════════════════════════
+
+function applyOrgName(name) {
+  const display = document.getElementById('org-name-display');
+  const divider = document.getElementById('org-name-divider');
+  if (!display) return;
+  if (name) {
+    display.textContent = name;
+    display.style.display = '';
+    if (divider) divider.style.display = '';
+  } else {
+    display.style.display = 'none';
+    if (divider) divider.style.display = 'none';
+  }
+}
 
 function getSavedProjectId() {
   return localStorage.getItem('flowlane_lastProjectId') ?? null;

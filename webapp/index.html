@@ -177,6 +177,8 @@
       <div class="header-logo">
         <img src="./logo.png" alt="FlowLane" width="28" height="28" style="border-radius:7px;" />
         <span class="brand-name">FlowLane</span>
+        <span id="org-name-divider" class="org-name-divider" style="display:none">&middot;</span>
+        <span id="org-name-display" class="org-name" style="display:none"></span>
       </div>
 
       <!-- Project Selector -->
@@ -207,6 +209,14 @@
 
       <!-- Header Actions -->
       <div class="header-actions">
+        <!-- Analytics -->
+        <button id="analytics-btn" class="btn-icon" type="button" aria-label="Analytics dashboard" title="Analytics dashboard">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+        </button>
+
         <!-- Swimlane Toggle -->
         <button id="swimlane-toggle-btn" class="btn-icon" type="button" aria-label="Toggle swimlanes" title="Toggle swimlanes">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
@@ -271,6 +281,26 @@
 
     <!-- ── BOARD ── -->
     <main id="board" class="board-wrapper"></main>
+
+    <!-- ── ANALYTICS VIEW ── -->
+    <div id="analytics-view" class="analytics-view" style="display:none">
+      <div class="analytics-header">
+        <div class="analytics-title-wrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+          <span class="analytics-title">Analytics</span>
+          <span id="analytics-project-name" class="analytics-project-name"></span>
+        </div>
+        <button class="btn-icon" id="analytics-close-btn" type="button" title="Close analytics">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="analytics-body"></div>
+    </div>
 
     <!-- ── TOAST CONTAINER ── -->
     <div id="toast-container" class="toast-container"></div>
