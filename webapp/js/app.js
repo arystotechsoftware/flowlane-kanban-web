@@ -18,7 +18,7 @@
 import { onAuthChange, signInWithGoogle, signOut, getCurrentUser, handleRedirectResult } from './auth.js';
 import { upsertUser, listenUser, listenProjects, inviteCollaborator, getProject,
   removeCollaborator, updateCollaboratorRole, getPendingInvites,
-  acceptInvite, getSentInvites, declineInvite, revokeInvite,
+  acceptInvite, getSentInvites, getAcceptedInvites, declineInvite, revokeInvite,
   syncCollaboratorInfo, updateProjectStatus,
   getProjectAuditLog } from './db.js';
 import { configure as configureStorage, getProjects, createProject, updateProject,
@@ -332,6 +332,46 @@ function renderInvitationEmptyState(container, message) {
   container.innerHTML = `<div class="invitation-empty">${escapeHtml(message)}</div>`;
 }
 
+function getInvitationSearchQuery() {
+  return (document.getElementById('invitation-manager-search-input')?.value ?? '')
+    .trim()
+    .toLowerCase();
+}
+
+function invitationMatchesQuery(invite, query) {
+  if (!query) return true;
+
+  const text = [
+    invite.projectName,
+    invite.email,
+    invite.invitedByName,
+    getInviteRoleLabel(invite.role),
+    getInviteStatusLabel(invite.status),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  return text.includes(query);
+}
+
+async function openInvitationProject(projectId) {
+  if (!projectId) return;
+
+  closeModal('invitation-manager');
+
+  if (!_state.projects.some((project) => project.id === projectId)) {
+    await loadProjects();
+  }
+
+  if (!_state.projects.some((project) => project.id === projectId)) {
+    showToast('That project is not available in your workspace yet.', 'warning');
+    return;
+  }
+
+  await selectProject(projectId);
+}
+
 async function acceptInvitation(invite) {
   if (!invite?.id || !_state.user?.uid) throw new Error('Invite not available');
 
@@ -358,11 +398,11 @@ async function revokeSentInvitation(inviteId) {
   showToast('Invitation revoked', 'success');
 }
 
-function renderReceivedInvites(container, invites, { onChanged } = {}) {
+function renderReceivedInvites(container, invites, { onChanged, emptyMessage } = {}) {
   container.innerHTML = '';
 
   if (!invites.length) {
-    renderInvitationEmptyState(container, 'No pending invitations right now.');
+    renderInvitationEmptyState(container, emptyMessage ?? 'No pending invitations right now.');
     return;
   }
 
@@ -434,11 +474,11 @@ function renderReceivedInvites(container, invites, { onChanged } = {}) {
   }
 }
 
-function renderSentInvites(container, invites, { onChanged } = {}) {
+function renderSentInvites(container, invites, { onChanged, emptyMessage } = {}) {
   container.innerHTML = '';
 
   if (!invites.length) {
-    renderInvitationEmptyState(container, 'No invitations sent yet.');
+    renderInvitationEmptyState(container, emptyMessage ?? 'No invitations sent yet.');
     return;
   }
 
@@ -482,40 +522,107 @@ function renderSentInvites(container, invites, { onChanged } = {}) {
   }
 }
 
+function renderAcceptedInvites(container, invites, { emptyMessage } = {}) {
+  container.innerHTML = '';
+
+  if (!invites.length) {
+    renderInvitationEmptyState(container, emptyMessage ?? 'No accepted invitations yet.');
+    return;
+  }
+
+  for (const invite of invites) {
+    const row = document.createElement('div');
+    row.className = 'pending-invite-row';
+    row.innerHTML = `
+      <div class="pending-invite-info">
+        <button class="invitation-project-link" type="button">${escapeHtml(invite.projectName ?? 'Unknown Project')}</button>
+        <div class="pending-invite-meta">
+          Your role: <span class="role-chip">${escapeHtml(getInviteRoleLabel(invite.role))}</span>
+          · Accepted ${escapeHtml(formatInviteDate(invite.acceptedAt ?? invite.createdAt))}
+        </div>
+      </div>
+      <div class="pending-invite-actions">
+        <span class="invite-status-badge invite-status-badge--accepted">Accepted</span>
+      </div>`;
+
+    row.querySelector('.invitation-project-link')?.addEventListener('click', () => {
+      openInvitationProject(invite.projectId).catch((err) => {
+        console.error('[openInvitationProject]', err);
+        showToast('Failed to open project', 'error');
+      });
+    });
+
+    container.appendChild(row);
+  }
+}
+
 async function populateInvitationManager() {
   const receivedList = document.getElementById('received-invitations-list');
+  const acceptedList = document.getElementById('accepted-invitations-list');
   const sentList = document.getElementById('sent-invitations-list');
-  if (!receivedList || !sentList) return;
+  const query = getInvitationSearchQuery();
+  if (!receivedList || !acceptedList || !sentList) return;
 
   if (!_state.user?.email) {
     renderInvitationEmptyState(receivedList, 'Sign in to review invitations.');
+    renderInvitationEmptyState(acceptedList, 'Sign in to review invitations.');
     renderInvitationEmptyState(sentList, 'Sign in to review invitations.');
     return;
   }
 
   renderInvitationEmptyState(receivedList, 'Loading invitations...');
+  renderInvitationEmptyState(acceptedList, 'Loading invitations...');
   renderInvitationEmptyState(sentList, 'Loading invitations...');
 
   try {
-    const [receivedInvites, sentInvites] = await Promise.all([
+    const [receivedInvites, acceptedInvites, sentInvites] = await Promise.all([
       getPendingInvites(_state.user.email),
+      getAcceptedInvites(_state.user.uid),
       getSentInvites(_state.user.uid),
     ]);
 
     const refreshManager = () => populateInvitationManager().catch(() => {});
-    renderReceivedInvites(receivedList, receivedInvites, { onChanged: refreshManager });
-    renderSentInvites(sentList, sentInvites, { onChanged: refreshManager });
+    renderReceivedInvites(
+      receivedList,
+      receivedInvites.filter((invite) => invitationMatchesQuery(invite, query)),
+      {
+        onChanged: refreshManager,
+        emptyMessage: query ? 'No pending invitations match your search.' : 'No pending invitations right now.',
+      },
+    );
+    renderAcceptedInvites(
+      acceptedList,
+      acceptedInvites.filter((invite) => invitationMatchesQuery(invite, query)),
+      {
+        emptyMessage: query ? 'No accepted invitations match your search.' : 'No accepted invitations yet.',
+      },
+    );
+    renderSentInvites(
+      sentList,
+      sentInvites.filter((invite) => invitationMatchesQuery(invite, query)),
+      {
+        onChanged: refreshManager,
+        emptyMessage: query ? 'No sent invitations match your search.' : 'No invitations sent yet.',
+      },
+    );
   } catch (err) {
     console.error('[invitationManager]', err);
     renderInvitationEmptyState(receivedList, 'Could not load received invitations.');
+    renderInvitationEmptyState(acceptedList, 'Could not load accepted invitations.');
     renderInvitationEmptyState(sentList, 'Could not load sent invitations.');
   }
 }
 
 async function openInvitationManager() {
+  const searchInput = document.getElementById('invitation-manager-search-input');
+  if (searchInput) {
+    searchInput.value = '';
+    searchInput.oninput = () => populateInvitationManager().catch(() => {});
+  }
   closeModal('settings');
   openModal('invitation-manager');
   await populateInvitationManager();
+  setTimeout(() => searchInput?.focus(), 50);
 }
 
 async function checkPendingInvites(user) {

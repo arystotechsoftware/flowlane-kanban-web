@@ -2935,6 +2935,10 @@ textarea.form-input {
   margin-top: 18px;
 }
 
+.invitation-manager-search {
+  margin-bottom: 18px;
+}
+
 .invitation-manager-help {
   margin: 6px 0 10px;
   font-size: 12px;
@@ -2981,6 +2985,30 @@ textarea.form-input {
   background: rgba(239, 68, 68, 0.14);
   color: #ff8f8f;
   border-color: rgba(239, 68, 68, 0.24);
+}
+
+.invitation-project-link {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: color var(--trans);
+}
+
+.invitation-project-link:hover {
+  color: var(--accent);
+}
+
+.invitation-project-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-xs);
 }
 
 @media (max-width: 680px) {

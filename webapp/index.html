@@ -939,10 +939,18 @@
         </button>
       </div>
       <div class="modal-body">
+        <div class="invitation-manager-search">
+          <input id="invitation-manager-search-input" type="text" class="form-input" placeholder="Search invitations..." autocomplete="off" />
+        </div>
         <div class="invitation-manager-section">
           <label class="form-label">Received Invitations</label>
           <p class="invitation-manager-help">Pending invitations sent to your email address.</p>
           <div id="received-invitations-list" class="pending-invites-list"></div>
+        </div>
+        <div class="invitation-manager-section">
+          <label class="form-label">Accepted Invitations</label>
+          <p class="invitation-manager-help">Projects you have already joined through invitations.</p>
+          <div id="accepted-invitations-list" class="pending-invites-list"></div>
         </div>
         <div class="invitation-manager-section">
           <label class="form-label">Sent Invitations</label>
