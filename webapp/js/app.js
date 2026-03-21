@@ -526,7 +526,7 @@ function renderAcceptedInvites(container, invites, { emptyMessage } = {}) {
   container.innerHTML = '';
 
   if (!invites.length) {
-    renderInvitationEmptyState(container, emptyMessage ?? 'No accepted invitations yet.');
+    renderInvitationEmptyState(container, emptyMessage ?? 'No joined projects from invitations yet.');
     return;
   }
 
@@ -594,7 +594,7 @@ async function populateInvitationManager() {
       acceptedList,
       acceptedInvites.filter((invite) => invitationMatchesQuery(invite, query)),
       {
-        emptyMessage: query ? 'No accepted invitations match your search.' : 'No accepted invitations yet.',
+        emptyMessage: query ? 'No joined projects match your search.' : 'No joined projects from invitations yet.',
       },
     );
     renderSentInvites(
