@@ -829,28 +829,35 @@
   <!-- ── INVITE MODAL ── -->
   <div id="invite-modal" class="modal-overlay hidden" data-modal="invite">
     <div class="modal modal-sm">
-      <button class="modal-close-btn" data-close="invite" type="button" aria-label="Close">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-      <h2 class="modal-title">Invite Collaborators</h2>
-      <div class="form-group">
-        <label for="invite-email">Email Address</label>
-        <input id="invite-email" type="email" placeholder="colleague@example.com" />
+      <div class="modal-header">
+        <h2 class="modal-title">Invite Collaborator</h2>
+        <button class="modal-close" data-close="invite" type="button" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
-      <div class="form-group">
-        <label for="invite-role">Role</label>
-        <select id="invite-role">
-          <option value="editor">Editor</option>
-          <option value="viewer">Viewer</option>
-          <option value="admin">Admin</option>
-        </select>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="invite-email-input">Email Address</label>
+          <input type="email" id="invite-email-input" class="form-input" placeholder="colleague@example.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="invite-role-select">Permission</label>
+          <select id="invite-role-select" class="form-input">
+            <option value="editor">Editor (can edit cards)</option>
+            <option value="viewer">Viewer (read only)</option>
+            <option value="admin">Admin (full access)</option>
+          </select>
+        </div>
+        <div id="collaborators-list-section">
+          <label class="form-label" style="margin-top:12px">Current Collaborators</label>
+          <div id="current-collaborators" class="collaborators-list"></div>
+        </div>
       </div>
       <div class="modal-footer">
-        <button id="send-invite-btn" class="btn btn-primary" type="button">Send Invite</button>
-      </div>
-      <div class="invite-pending-section">
-        <h4>Pending Invites</h4>
-        <ul id="pending-invites-list" class="pending-invites-list"></ul>
+        <button class="btn-ghost" data-close="invite" type="button">Close</button>
+        <button class="btn-primary" id="send-invite-btn" type="button">Send Invite</button>
       </div>
     </div>
   </div>
