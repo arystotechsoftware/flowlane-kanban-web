@@ -873,17 +873,21 @@ function wireStaticButtons() {
     const pStatus = currentProj?.projectStatus ?? 'new';
     const statusBadge = document.getElementById('current-project-status-badge');
     if (statusBadge) {
-      const statusLabels = { 'new': 'New', 'in-progress': 'In Progress', 'completed': 'Completed', 'cancelled': 'Cancelled' };
+      const statusLabels = {
+        'new': 'New',
+        'in-progress': 'In Progress',
+        'completed': 'Completed',
+        'cancelled': 'Cancelled',
+        'deferred': 'Deferred',
+      };
       statusBadge.textContent = statusLabels[pStatus] ?? pStatus;
       statusBadge.className = `project-status-badge project-status-badge--${pStatus}`;
     }
 
-    // Show/hide Change Status button — only admins can mark completed/cancelled
+    // Show/hide Change Status button — admins can always change status
     const changeStatusBtn = document.getElementById('change-project-status-btn');
     if (changeStatusBtn) {
-      const isAdmin = canAdmin();
-      const isTerminal = pStatus === 'completed' || pStatus === 'cancelled';
-      changeStatusBtn.style.display = (isAdmin && !isTerminal) ? '' : 'none';
+      changeStatusBtn.style.display = canAdmin() ? '' : 'none';
     }
 
     openModal('settings');
@@ -1381,12 +1385,14 @@ function wireStaticButtons() {
 
     try {
       if (_state.tier === 'premium') {
-        await updateProjectStatus(projectId, newStatus, remarks);
+        await updateProjectStatus(projectId, newStatus, remarks, _state.user?.uid ?? null);
       } else {
         await updateProject(projectId, {
           projectStatus: newStatus,
           ...(newStatus === 'completed' ? { completedAt: Date.now(), completionRemarks: remarks } : {}),
           ...(newStatus === 'cancelled' ? { cancelledAt: Date.now(), cancellationRemarks: remarks } : {}),
+          ...(newStatus === 'deferred' ? { deferredAt: Date.now(), deferralRemarks: remarks } : {}),
+          ...(newStatus === 'in-progress' ? { inProgressAt: Date.now() } : {}),
         });
       }
 
@@ -1484,9 +1490,12 @@ function openProjectBrowser() {
     listEl.innerHTML = '';
     const q = filter.toLowerCase();
 
+    const isTerminal = (status) =>
+      status === 'completed' || status === 'cancelled' || status === 'deferred';
+
     const sorted = [..._state.projects].sort((a, b) => {
-      const termA = (a.projectStatus === 'completed' || a.projectStatus === 'cancelled') ? 1 : 0;
-      const termB = (b.projectStatus === 'completed' || b.projectStatus === 'cancelled') ? 1 : 0;
+      const termA = isTerminal(a.projectStatus) ? 1 : 0;
+      const termB = isTerminal(b.projectStatus) ? 1 : 0;
       if (termA !== termB) return termA - termB;
       return 0;
     });

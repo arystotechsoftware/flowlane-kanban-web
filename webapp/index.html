@@ -714,7 +714,7 @@
             <span class="form-hint">Only project admins can change status</span>
           </label>
           <div style="display:flex;align-items:center;gap:8px">
-            <span id="current-project-status-badge" class="plan-badge" style="background:var(--accent)">New</span>
+            <span id="current-project-status-badge" class="project-status-badge project-status-badge--new">New</span>
             <button class="btn-ghost btn-sm" id="change-project-status-btn" type="button" style="display:none">Change Status</button>
           </div>
         </div>
@@ -871,6 +871,67 @@
         </button>
         <button id="downgrade-renew-btn" class="btn btn-primary btn-block" type="button">Renew Premium</button>
         <button id="downgrade-continue-btn" class="btn btn-ghost btn-block" type="button">Continue with Free Plan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Project Browser Modal -->
+  <div id="project-browser-modal" class="modal-overlay hidden" data-modal="project-browser">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+          All Projects
+        </h2>
+        <button class="modal-close" data-close="project-browser" type="button" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body" style="padding-top:0">
+        <div class="project-browser-search">
+          <input type="text" id="project-browser-search-input" placeholder="Search projects..." autocomplete="off" />
+        </div>
+        <div id="project-browser-list" class="project-browser-list"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="project-browser" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Project Status Change Modal -->
+  <div id="project-status-modal" class="modal-overlay hidden" data-modal="project-status">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title" id="project-status-modal-title">Change Project Status</h2>
+        <button class="modal-close" data-close="project-status" type="button" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="project-new-status-select">New Status</label>
+          <select id="project-new-status-select" class="form-input">
+            <option value="in-progress">In Progress</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="deferred">Deferred</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="project-status-remarks">Remarks</label>
+          <textarea id="project-status-remarks" class="status-change-remarks" placeholder="Add your remarks..." rows="3"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="project-status" type="button">Cancel</button>
+        <button class="btn-primary" id="confirm-project-status-btn" type="button">Confirm</button>
       </div>
     </div>
   </div>
