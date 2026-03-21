@@ -327,191 +327,206 @@
   <!-- ── CARD MODAL ── -->
   <div id="card-modal" class="modal-overlay hidden" data-modal="card">
     <div class="modal modal-card">
-      <!-- Cover area -->
-      <div id="card-cover-area" class="card-cover-area"></div>
-
-      <!-- Close -->
-      <button class="modal-close-btn" data-close="card" type="button" aria-label="Close">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      <button class="modal-close" data-close="card" type="button" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
       </button>
 
+      <div id="card-cover-area" class="card-cover-area" style="display:none"></div>
+
       <div class="modal-card-body">
-        <!-- Left column -->
-        <div class="card-main">
-          <!-- Key -->
-          <span id="card-key-display" class="card-key-badge"></span>
+        <div class="modal-card-main">
+          <div class="card-priority-bar" id="card-priority-bar"></div>
 
-          <!-- Title -->
-          <textarea id="card-title-input" class="card-title-input" placeholder="Card title&hellip;" rows="1"></textarea>
-
-          <!-- Priority bar -->
-          <div id="card-priority-bar" class="card-priority-bar">
-            <label for="card-priority-select">Priority</label>
-            <select id="card-priority-select">
-              <option value="">None</option>
-              <option value="critical">Critical</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-            </select>
+          <div class="card-key-badge-wrap">
+            <span id="card-key-display" class="card-key-modal"></span>
+          </div>
+          <div class="card-title-wrap">
+            <textarea id="card-title-input" class="card-title-input" placeholder="Card title&hellip;" rows="1"></textarea>
           </div>
 
-          <!-- Rich text editor -->
-          <div class="card-description-section">
-            <h4>Description</h4>
-            <div id="quill-editor" class="quill-editor"></div>
-          </div>
-
-          <!-- Labels -->
-          <div class="card-section">
-            <h4>Labels</h4>
-            <div id="card-labels-list" class="card-labels-list"></div>
-            <div class="label-add-row">
-              <input id="label-input" type="text" placeholder="Label text&hellip;" maxlength="30" />
-              <div id="label-color-picker" class="color-picker-dots">
-                <button class="color-dot" data-color="#6c63ff" style="background:#6c63ff" type="button" aria-label="Purple"></button>
-                <button class="color-dot" data-color="#48dbfb" style="background:#48dbfb" type="button" aria-label="Cyan"></button>
-                <button class="color-dot" data-color="#ff6b6b" style="background:#ff6b6b" type="button" aria-label="Red"></button>
-                <button class="color-dot" data-color="#feca57" style="background:#feca57" type="button" aria-label="Yellow"></button>
-                <button class="color-dot" data-color="#1dd1a1" style="background:#1dd1a1" type="button" aria-label="Green"></button>
-                <button class="color-dot" data-color="#ff9ff3" style="background:#ff9ff3" type="button" aria-label="Pink"></button>
-                <button class="color-dot" data-color="#f368e0" style="background:#f368e0" type="button" aria-label="Magenta"></button>
-                <button class="color-dot" data-color="#ff9f43" style="background:#ff9f43" type="button" aria-label="Orange"></button>
-              </div>
-              <button id="add-label-btn" class="btn btn-sm btn-ghost" type="button">Add</button>
+          <div class="card-meta-row">
+            <div class="card-meta-item">
+              <label class="meta-label" for="card-column-select">Column</label>
+              <select id="card-column-select" class="meta-select"></select>
+            </div>
+            <div class="card-meta-item">
+              <label class="meta-label" for="card-status-select">Status</label>
+              <select id="card-status-select" class="meta-select">
+                <option value="new">New</option>
+                <option value="approved">Approved</option>
+                <option value="fixed">Fixed</option>
+                <option value="for-followup">For Follow-up</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div class="card-meta-item">
+              <label class="meta-label" for="card-priority-select">Priority</label>
+              <select id="card-priority-select" class="meta-select">
+                <option value="none">None</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <div class="card-meta-item">
+              <label class="meta-label" for="card-due-date">Target Date</label>
+              <input type="date" id="card-due-date" class="meta-input" />
             </div>
           </div>
 
-          <!-- Preset Tags -->
-          <div class="card-section">
-            <h4>Quick Tags</h4>
-            <div id="preset-tags-row" class="preset-tags-row"></div>
+          <div class="card-dates-row">
+            <div class="card-date-item">
+              <span class="date-icon">Created</span>
+              <span class="date-value" id="card-created-display">&mdash;</span>
+            </div>
+            <div class="card-date-item" id="card-created-by-item">
+              <span class="date-label">By</span>
+              <span class="date-value card-created-by" id="card-created-by-display">&mdash;</span>
+            </div>
+            <div class="card-date-item" id="card-completed-item" style="display:none">
+              <span class="date-label">Completed</span>
+              <span class="date-value" id="card-completed-display">&mdash;</span>
+            </div>
           </div>
 
-          <!-- Checklist -->
           <div class="card-section">
-            <h4>Checklist</h4>
-            <div class="checklist-progress-row">
-              <span id="checklist-progress" class="checklist-progress">0 / 0</span>
-              <div id="checklist-bar-wrap" class="checklist-bar-wrap">
-                <div id="checklist-bar" class="checklist-bar" style="width:0%"></div>
+            <label class="section-label" for="quill-editor">Description</label>
+            <div id="quill-editor" class="quill-editor-wrap"></div>
+          </div>
+
+          <div class="card-section">
+            <label class="section-label">Labels</label>
+            <div class="labels-container" id="card-labels-container">
+              <div class="labels-list" id="card-labels-list"></div>
+              <div class="preset-tags-row" id="preset-tags-row"></div>
+              <div class="label-add-row">
+                <input type="text" id="label-input" class="label-input" placeholder="Custom label..." maxlength="30" />
+                <div class="label-color-picker" id="label-color-picker">
+                  <button class="color-dot active" data-color="#6366f1" style="background:#6366f1" type="button" aria-label="Indigo"></button>
+                  <button class="color-dot" data-color="#10b981" style="background:#10b981" type="button" aria-label="Green"></button>
+                  <button class="color-dot" data-color="#f59e0b" style="background:#f59e0b" type="button" aria-label="Amber"></button>
+                  <button class="color-dot" data-color="#ef4444" style="background:#ef4444" type="button" aria-label="Red"></button>
+                  <button class="color-dot" data-color="#06b6d4" style="background:#06b6d4" type="button" aria-label="Cyan"></button>
+                  <button class="color-dot" data-color="#ec4899" style="background:#ec4899" type="button" aria-label="Pink"></button>
+                  <button class="color-dot" data-color="#f97316" style="background:#f97316" type="button" aria-label="Orange"></button>
+                  <button class="color-dot" data-color="#8b5cf6" style="background:#8b5cf6" type="button" aria-label="Purple"></button>
+                  <button class="color-dot" data-color="#84cc16" style="background:#84cc16" type="button" aria-label="Lime"></button>
+                  <button class="color-dot" data-color="#0ea5e9" style="background:#0ea5e9" type="button" aria-label="Sky"></button>
+                  <button class="color-dot" data-color="#d2a8ff" style="background:#d2a8ff" type="button" aria-label="Lavender"></button>
+                  <button class="color-dot" data-color="#ff7b72" style="background:#ff7b72" type="button" aria-label="Coral"></button>
+                </div>
+                <button class="btn-sm" id="add-label-btn" type="button">Add</button>
               </div>
             </div>
-            <ul id="checklist-items" class="checklist-items"></ul>
+          </div>
+
+          <div class="card-section">
+            <label class="section-label">
+              <span>Checklist</span>
+              <span class="checklist-progress" id="checklist-progress"></span>
+            </label>
+            <div class="checklist-progress-bar-wrap" id="checklist-bar-wrap" style="display:none">
+              <div class="checklist-progress-bar" id="checklist-bar"></div>
+            </div>
+            <div id="checklist-items" class="checklist-items"></div>
             <div class="checklist-add-row">
-              <input id="checklist-input" type="text" placeholder="Add item&hellip;" />
-              <button id="add-checklist-btn" class="btn btn-sm btn-ghost" type="button">Add</button>
+              <input type="text" id="checklist-input" class="checklist-input" placeholder="Add checklist item..." />
+              <button class="btn-sm" id="add-checklist-btn" type="button">Add</button>
             </div>
           </div>
 
-          <!-- Attachments -->
-          <div class="card-section">
-            <h4>Attachments</h4>
-            <div id="attachment-premium-gate" class="premium-gate hidden">
-              <p>Attachments require a Premium plan.</p>
-            </div>
-            <ul id="attachments-list" class="attachments-list"></ul>
-            <div class="attachment-add-row">
-              <button id="add-attachment-btn" class="btn btn-sm btn-ghost" type="button">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-                Add file
+          <div class="card-section" id="attachments-section">
+            <label class="section-label">Attachments</label>
+            <div id="attachments-list" class="attachments-list"></div>
+            <div class="attachment-actions">
+              <button class="btn-sm" id="add-attachment-btn" type="button">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                </svg>
+                Attach File
               </button>
-              <input id="attachment-file-input" type="file" class="hidden" />
+              <input type="file" id="attachment-file-input" style="display:none" multiple />
+              <div class="premium-gate" id="attachment-premium-gate" style="display:none">
+                <span class="premium-badge">Premium</span> Attachments require Premium.
+              </div>
             </div>
           </div>
-
-          <!-- Comments -->
-          <section id="comments-section" class="card-section">
-            <h4>Comments</h4>
-            <div id="comments-list" class="comments-list"></div>
-            <div class="comment-add-row">
-              <textarea id="comment-input" placeholder="Write a comment&hellip;" rows="2"></textarea>
-              <button id="post-comment-btn" class="btn btn-sm btn-primary" type="button">Post</button>
-            </div>
-          </section>
-
-          <!-- Activity -->
-          <section class="card-section">
-            <h4>Activity</h4>
-            <ul id="activity-log" class="activity-log"></ul>
-          </section>
         </div>
 
-        <!-- Right sidebar -->
-        <aside class="card-sidebar">
-          <!-- Status -->
-          <div class="sidebar-field">
-            <label for="card-status-select">Status</label>
-            <select id="card-status-select">
-              <option value="new">New</option>
-              <option value="approved">Approved</option>
-              <option value="fixed">Fixed</option>
-              <option value="for-followup">For Follow-up</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
-
-          <!-- Column -->
-          <div class="sidebar-field">
-            <label for="card-column-select">Column</label>
-            <select id="card-column-select"></select>
-          </div>
-
-          <!-- Due Date -->
-          <div class="sidebar-field">
-            <label for="card-due-date">Due Date</label>
-            <input id="card-due-date" type="date" />
-          </div>
-
-          <!-- Assignee -->
-          <div class="sidebar-field">
-            <label>Assignee</label>
-            <div id="assignee-display" class="assignee-display">Unassigned</div>
-            <ul id="assignee-list" class="assignee-list hidden"></ul>
-          </div>
-
-          <!-- Dates info -->
-          <div class="sidebar-field">
-            <label>Created</label>
-            <span id="card-created-display" class="meta-text"></span>
-          </div>
-          <div id="card-created-by-item" class="sidebar-field hidden">
-            <label>Created by</label>
-            <span id="card-created-by-display" class="meta-text"></span>
-          </div>
-          <div id="card-completed-item" class="sidebar-field hidden">
-            <label>Completed</label>
-            <span id="card-completed-display" class="meta-text"></span>
-          </div>
-
-          <!-- Cover -->
-          <div class="sidebar-field">
-            <label>Cover</label>
-            <div id="cover-premium-gate" class="premium-gate hidden">
-              <p>Cover images require Premium.</p>
-            </div>
-            <div id="cover-color-swatches" class="cover-color-swatches">
-              <button class="color-swatch" data-color="#6c63ff" style="background:#6c63ff" type="button"></button>
-              <button class="color-swatch" data-color="#48dbfb" style="background:#48dbfb" type="button"></button>
-              <button class="color-swatch" data-color="#ff6b6b" style="background:#ff6b6b" type="button"></button>
-              <button class="color-swatch" data-color="#feca57" style="background:#feca57" type="button"></button>
-              <button class="color-swatch" data-color="#1dd1a1" style="background:#1dd1a1" type="button"></button>
-              <button class="color-swatch" data-color="#222f3e" style="background:#222f3e" type="button"></button>
+        <div class="modal-card-sidebar">
+          <div class="card-section" id="cover-section">
+            <label class="section-label">Cover</label>
+            <div class="cover-color-swatches" id="cover-color-swatches">
+              <button class="cover-swatch" data-color="#ef4444" style="background:#ef4444" title="Red" type="button"></button>
+              <button class="cover-swatch" data-color="#f97316" style="background:#f97316" title="Orange" type="button"></button>
+              <button class="cover-swatch" data-color="#f59e0b" style="background:#f59e0b" title="Amber" type="button"></button>
+              <button class="cover-swatch" data-color="#10b981" style="background:#10b981" title="Green" type="button"></button>
+              <button class="cover-swatch" data-color="#06b6d4" style="background:#06b6d4" title="Cyan" type="button"></button>
+              <button class="cover-swatch" data-color="#6366f1" style="background:#6366f1" title="Indigo" type="button"></button>
+              <button class="cover-swatch" data-color="#ec4899" style="background:#ec4899" title="Pink" type="button"></button>
+              <button class="cover-swatch" data-color="#8b5cf6" style="background:#8b5cf6" title="Purple" type="button"></button>
             </div>
             <div class="cover-actions">
-              <button id="cover-upload-btn" class="btn btn-sm btn-ghost" type="button">Upload image</button>
-              <input id="cover-file-input" type="file" accept="image/*" class="hidden" />
-              <button id="cover-remove-btn" class="btn btn-sm btn-ghost btn-danger" type="button">Remove</button>
+              <button class="btn-sm" id="cover-upload-btn" type="button">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                Upload Image
+              </button>
+              <button class="btn-ghost btn-xs" id="cover-remove-btn" style="display:none" type="button">Remove Cover</button>
+              <input type="file" id="cover-file-input" accept="image/*" style="display:none" />
+            </div>
+            <div class="premium-gate" id="cover-premium-gate" style="display:none">
+              <span class="premium-badge">Premium</span> Image covers require Premium.
             </div>
           </div>
 
-          <!-- Actions -->
-          <div class="card-actions">
-            <button id="save-card-btn" class="btn btn-primary btn-block" type="button">Save Card</button>
-            <button id="delete-card-btn" class="btn btn-danger btn-block" type="button">Delete Card</button>
+          <div class="card-section">
+            <label class="section-label">Assignee</label>
+            <div id="assignee-section" class="assignee-section">
+              <div id="assignee-display" class="assignee-display">
+                <span class="assignee-placeholder">Unassigned</span>
+              </div>
+              <div id="assignee-list" class="assignee-list hidden"></div>
+            </div>
           </div>
-        </aside>
+
+          <div class="card-section" id="comments-section">
+            <label class="section-label">
+              <span>Comments</span>
+              <span class="premium-badge">Premium</span>
+            </label>
+            <div id="comments-list" class="comments-list"></div>
+            <div class="comment-input-wrap">
+              <textarea id="comment-input" class="comment-input" placeholder="Write a comment..." rows="2"></textarea>
+              <button class="btn-sm" id="post-comment-btn" type="button">Post</button>
+            </div>
+          </div>
+
+          <div class="card-section">
+            <label class="section-label">Activity</label>
+            <div id="activity-log" class="activity-log"></div>
+          </div>
+
+          <div class="card-actions">
+            <button class="btn-danger-sm" id="delete-card-btn" type="button">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
+              Delete Card
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="card" type="button">Cancel</button>
+        <button class="btn-primary" id="save-card-btn" type="button">Save Changes</button>
       </div>
     </div>
   </div>
