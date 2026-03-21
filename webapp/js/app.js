@@ -544,6 +544,10 @@ function renderAcceptedInvites(container, invites, { emptyMessage } = {}) {
       <div class="pending-invite-actions">
         <span class="invite-status-badge invite-status-badge--accepted">Accepted</span>
       </div>`;
+    const meta = row.querySelector('.pending-invite-meta');
+    if (meta) {
+      meta.innerHTML = `Invited by <strong>${escapeHtml(invite.invitedByName ?? 'Someone')}</strong> &middot; Your role: <span class="role-chip">${escapeHtml(getInviteRoleLabel(invite.role))}</span> &middot; Accepted ${escapeHtml(formatInviteDate(invite.acceptedAt ?? invite.createdAt))}`;
+    }
 
     row.querySelector('.invitation-project-link')?.addEventListener('click', () => {
       openInvitationProject(invite.projectId).catch((err) => {
@@ -577,9 +581,11 @@ async function populateInvitationManager() {
   try {
     const [receivedInvites, acceptedInvites, sentInvites] = await Promise.all([
       getPendingInvites(_state.user.email),
-      getAcceptedInvites(_state.user.uid),
+      getAcceptedInvites(_state.user.uid, _state.user.email),
       getSentInvites(_state.user.uid),
     ]);
+    const activeProjectIds = new Set((_state.projects ?? []).map((project) => project.id).filter(Boolean));
+    const visibleAcceptedInvites = acceptedInvites.filter((invite) => invite.projectId && activeProjectIds.has(invite.projectId));
 
     const refreshManager = () => populateInvitationManager().catch(() => {});
     renderReceivedInvites(
@@ -592,7 +598,7 @@ async function populateInvitationManager() {
     );
     renderAcceptedInvites(
       acceptedList,
-      acceptedInvites.filter((invite) => invitationMatchesQuery(invite, query)),
+      visibleAcceptedInvites.filter((invite) => invitationMatchesQuery(invite, query)),
       {
         emptyMessage: query ? 'No joined projects match your search.' : 'No joined projects from invitations yet.',
       },
@@ -608,7 +614,7 @@ async function populateInvitationManager() {
   } catch (err) {
     console.error('[invitationManager]', err);
     renderInvitationEmptyState(receivedList, 'Could not load received invitations.');
-    renderInvitationEmptyState(acceptedList, 'Could not load accepted invitations.');
+    renderInvitationEmptyState(acceptedList, 'Could not load joined projects.');
     renderInvitationEmptyState(sentList, 'Could not load sent invitations.');
   }
 }

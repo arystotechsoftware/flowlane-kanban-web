@@ -418,21 +418,48 @@ export async function getSentInvites(invitedByUid) {
     });
 }
 
-/** Fetch all accepted invites for the signed-in recipient. */
-export async function getAcceptedInvites(acceptedByUid) {
-  if (!acceptedByUid) return [];
-  const q = query(
-    collection(db, 'invites'),
-    where('acceptedByUid', '==', acceptedByUid)
-  );
-  const snap = await getDocs(q);
-  return snap.docs
-    .map((d) => ({ id: d.id, ...d.data() }))
-    .sort((a, b) => {
-      const ta = a.acceptedAt?.seconds || a.createdAt?.seconds || 0;
-      const tb = b.acceptedAt?.seconds || b.createdAt?.seconds || 0;
-      return tb - ta;
-    });
+/** Fetch all accepted invites for the signed-in recipient, including legacy records. */
+export async function getAcceptedInvites(acceptedByUid, email = '') {
+  const inviteQueries = [];
+  const trimmedEmail = typeof email === 'string' ? email.trim() : '';
+
+  if (acceptedByUid) {
+    inviteQueries.push(
+      getDocs(query(
+        collection(db, 'invites'),
+        where('acceptedByUid', '==', acceptedByUid)
+      ))
+    );
+  }
+
+  if (trimmedEmail) {
+    inviteQueries.push(
+      getDocs(query(
+        collection(db, 'invites'),
+        where('email', '==', trimmedEmail),
+        where('status', '==', 'accepted')
+      ))
+    );
+  }
+
+  if (!inviteQueries.length) return [];
+
+  const snapshots = await Promise.all(inviteQueries);
+  const invites = new Map();
+
+  for (const snap of snapshots) {
+    for (const docSnap of snap.docs) {
+      const invite = { id: docSnap.id, ...docSnap.data() };
+      if ((invite.status ?? 'pending') !== 'accepted') continue;
+      invites.set(docSnap.id, invite);
+    }
+  }
+
+  return Array.from(invites.values()).sort((a, b) => {
+    const ta = a.acceptedAt?.seconds || a.createdAt?.seconds || 0;
+    const tb = b.acceptedAt?.seconds || b.createdAt?.seconds || 0;
+    return tb - ta;
+  });
 }
 
 export async function declineInvite(inviteId, declinedByUid = null) {
