@@ -18,7 +18,8 @@
 import { onAuthChange, signInWithGoogle, signOut, getCurrentUser, handleRedirectResult } from './auth.js';
 import { upsertUser, listenUser, listenProjects, inviteCollaborator, getProject,
   removeCollaborator, updateCollaboratorRole, getPendingInvites,
-  acceptInvite, syncCollaboratorInfo, updateProjectStatus,
+  acceptInvite, getSentInvites, declineInvite, revokeInvite,
+  syncCollaboratorInfo, updateProjectStatus,
   getProjectAuditLog } from './db.js';
 import { configure as configureStorage, getProjects, createProject, updateProject,
   deleteProject, getColumns, getCards, createColumn, deleteColumn,
@@ -52,6 +53,7 @@ let _state = {
   unsubUser:        null,
   selectedPlan:     'monthly',
   isDowngraded:     false,
+  pendingInviteCheckKey: null,
 };
 
 // Expose current project ID globally so board.js / card-modal.js can access it
@@ -97,6 +99,7 @@ function show(screenId) {
 
 async function handleSignIn(user) {
   _state.user = user;
+  _state.pendingInviteCheckKey = null;
 
   // Upsert user in Firestore (no-op if offline / firebase not configured)
   try {
@@ -165,7 +168,6 @@ async function handleSignIn(user) {
           configureStorage({ isPremium: true, uid: user.uid });
           await loadProjects();
           show('app');
-          checkPendingInvites(user).catch(() => {});
         } else {
           // Not premium — show the premium wall
           show('premium-wall');
@@ -186,8 +188,11 @@ async function handleSignIn(user) {
           setTierBadge('premium');
           await loadProjects();
           show('app');
-          checkPendingInvites(user).catch(() => {});
         }
+      }
+
+      if (tierResolved) {
+        queuePendingInviteCheck(user);
       }
     });
   } catch (_) {
@@ -201,6 +206,7 @@ function handleSignOut() {
   _state.projects = [];
   _state.currentProjectId = null;
   _state.isDowngraded = false;
+  _state.pendingInviteCheckKey = null;
 
   _state.unsubUser?.();
   _state.unsubUser = null;
@@ -267,6 +273,251 @@ function finalizeDowngrade() {
 // PENDING INVITES
 // ══════════════════════════════════════════════════════════════════════════════
 
+function queuePendingInviteCheck(user) {
+  if (!user?.uid || !user?.email) return;
+  const key = `${user.uid}:${_state.tier}`;
+  if (_state.pendingInviteCheckKey === key) return;
+  _state.pendingInviteCheckKey = key;
+  checkPendingInvites(user).catch(() => {});
+}
+
+function openInviteUpgrade() {
+  closeModal('pending-invites');
+  closeModal('invitation-manager');
+  const note = document.getElementById('upgrade-note');
+  if (note) {
+    note.textContent = 'Upgrade to Premium to accept invitations and collaborate with your team.';
+  }
+  openModal('upgrade');
+}
+
+function getInviteRoleLabel(role) {
+  if (role === 'admin') return 'Admin';
+  if (role === 'editor') return 'Editor';
+  return 'Viewer';
+}
+
+function getInviteStatusLabel(status) {
+  if (status === 'accepted') return 'Accepted';
+  if (status === 'declined') return 'Declined';
+  if (status === 'revoked') return 'Revoked';
+  return 'Pending';
+}
+
+function toInviteDate(value) {
+  if (!value) return null;
+  if (typeof value?.toDate === 'function') {
+    const date = value.toDate();
+    return Number.isNaN(date?.getTime?.()) ? null : date;
+  }
+  if (typeof value?.seconds === 'number') {
+    const date = new Date(value.seconds * 1000);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatInviteDate(value) {
+  const date = toInviteDate(value);
+  if (!date) return 'Unknown date';
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function renderInvitationEmptyState(container, message) {
+  container.innerHTML = `<div class="invitation-empty">${escapeHtml(message)}</div>`;
+}
+
+async function acceptInvitation(invite) {
+  if (!invite?.id || !_state.user?.uid) throw new Error('Invite not available');
+
+  await acceptInvite(invite.id, invite.projectId, invite.role, _state.user.uid);
+  syncCollaboratorInfo(invite.projectId, _state.user.uid, {
+    name: _state.user.displayName,
+    email: _state.user.email,
+    photoURL: _state.user.photoURL,
+  }).catch(() => {});
+
+  showToast('Invitation accepted! Reloading projects...', 'success');
+  await loadProjects();
+}
+
+async function declineInvitation(inviteId) {
+  if (!inviteId) throw new Error('Invite not available');
+  await declineInvite(inviteId, _state.user?.uid ?? null);
+  showToast('Invitation declined', 'success');
+}
+
+async function revokeSentInvitation(inviteId) {
+  if (!inviteId) throw new Error('Invite not available');
+  await revokeInvite(inviteId, _state.user?.uid ?? null);
+  showToast('Invitation revoked', 'success');
+}
+
+function renderReceivedInvites(container, invites, { onChanged } = {}) {
+  container.innerHTML = '';
+
+  if (!invites.length) {
+    renderInvitationEmptyState(container, 'No pending invitations right now.');
+    return;
+  }
+
+  for (const invite of invites) {
+    const row = document.createElement('div');
+    row.className = 'pending-invite-row';
+    row.dataset.inviteId = invite.id;
+
+    const acceptLabel = _state.tier === 'premium' ? 'Accept' : 'Upgrade';
+    row.innerHTML = `
+      <div class="pending-invite-info">
+        <div class="pending-invite-project">${escapeHtml(invite.projectName ?? 'Unknown Project')}</div>
+        <div class="pending-invite-meta">
+          Invited by <strong>${escapeHtml(invite.invitedByName ?? 'Someone')}</strong>
+          · Role: <span class="role-chip">${escapeHtml(getInviteRoleLabel(invite.role))}</span>
+        </div>
+      </div>
+      <div class="pending-invite-actions">
+        <button class="btn-primary btn-sm accept-invite-btn" type="button">${acceptLabel}</button>
+        <button class="btn-ghost btn-sm decline-invite-btn" type="button">Decline</button>
+      </div>`;
+
+    const acceptBtn = row.querySelector('.accept-invite-btn');
+    const declineBtn = row.querySelector('.decline-invite-btn');
+
+    acceptBtn?.addEventListener('click', async () => {
+      if (_state.tier !== 'premium') {
+        openInviteUpgrade();
+        return;
+      }
+
+      if (!acceptBtn || !declineBtn) return;
+      acceptBtn.disabled = true;
+      declineBtn.disabled = true;
+      acceptBtn.textContent = 'Accepting...';
+
+      try {
+        await acceptInvitation(invite);
+        await onChanged?.();
+      } catch (err) {
+        console.error('[acceptInvite]', err);
+        showToast('Failed to accept invite. Try again.', 'error');
+        acceptBtn.disabled = false;
+        declineBtn.disabled = false;
+        acceptBtn.textContent = 'Accept';
+      }
+    });
+
+    declineBtn?.addEventListener('click', async () => {
+      if (!acceptBtn || !declineBtn) return;
+      acceptBtn.disabled = true;
+      declineBtn.disabled = true;
+      declineBtn.textContent = 'Declining...';
+
+      try {
+        await declineInvitation(invite.id);
+        await onChanged?.();
+      } catch (err) {
+        console.error('[declineInvite]', err);
+        showToast('Failed to decline invite. Try again.', 'error');
+        acceptBtn.disabled = false;
+        declineBtn.disabled = false;
+        acceptBtn.textContent = _state.tier === 'premium' ? 'Accept' : 'Upgrade';
+        declineBtn.textContent = 'Decline';
+      }
+    });
+
+    container.appendChild(row);
+  }
+}
+
+function renderSentInvites(container, invites, { onChanged } = {}) {
+  container.innerHTML = '';
+
+  if (!invites.length) {
+    renderInvitationEmptyState(container, 'No invitations sent yet.');
+    return;
+  }
+
+  for (const invite of invites) {
+    const status = invite.status ?? 'pending';
+    const row = document.createElement('div');
+    row.className = 'pending-invite-row';
+    row.dataset.inviteId = invite.id;
+
+    row.innerHTML = `
+      <div class="pending-invite-info">
+        <div class="pending-invite-project">${escapeHtml(invite.projectName ?? 'Unknown Project')}</div>
+        <div class="pending-invite-meta">
+          To <strong>${escapeHtml(invite.email ?? 'Unknown email')}</strong>
+          · Role: <span class="role-chip">${escapeHtml(getInviteRoleLabel(invite.role))}</span>
+          · Sent ${escapeHtml(formatInviteDate(invite.createdAt))}
+        </div>
+      </div>
+      <div class="pending-invite-actions">
+        <span class="invite-status-badge invite-status-badge--${escapeHtml(status)}">${escapeHtml(getInviteStatusLabel(status))}</span>
+        ${status === 'pending' ? '<button class="btn-ghost btn-sm revoke-invite-btn" type="button">Revoke</button>' : ''}
+      </div>`;
+
+    const revokeBtn = row.querySelector('.revoke-invite-btn');
+    revokeBtn?.addEventListener('click', async () => {
+      revokeBtn.disabled = true;
+      revokeBtn.textContent = 'Revoking...';
+
+      try {
+        await revokeSentInvitation(invite.id);
+        await onChanged?.();
+      } catch (err) {
+        console.error('[revokeInvite]', err);
+        showToast('Failed to revoke invite. Try again.', 'error');
+        revokeBtn.disabled = false;
+        revokeBtn.textContent = 'Revoke';
+      }
+    });
+
+    container.appendChild(row);
+  }
+}
+
+async function populateInvitationManager() {
+  const receivedList = document.getElementById('received-invitations-list');
+  const sentList = document.getElementById('sent-invitations-list');
+  if (!receivedList || !sentList) return;
+
+  if (!_state.user?.email) {
+    renderInvitationEmptyState(receivedList, 'Sign in to review invitations.');
+    renderInvitationEmptyState(sentList, 'Sign in to review invitations.');
+    return;
+  }
+
+  renderInvitationEmptyState(receivedList, 'Loading invitations...');
+  renderInvitationEmptyState(sentList, 'Loading invitations...');
+
+  try {
+    const [receivedInvites, sentInvites] = await Promise.all([
+      getPendingInvites(_state.user.email),
+      getSentInvites(_state.user.uid),
+    ]);
+
+    const refreshManager = () => populateInvitationManager().catch(() => {});
+    renderReceivedInvites(receivedList, receivedInvites, { onChanged: refreshManager });
+    renderSentInvites(sentList, sentInvites, { onChanged: refreshManager });
+  } catch (err) {
+    console.error('[invitationManager]', err);
+    renderInvitationEmptyState(receivedList, 'Could not load received invitations.');
+    renderInvitationEmptyState(sentList, 'Could not load sent invitations.');
+  }
+}
+
+async function openInvitationManager() {
+  closeModal('settings');
+  openModal('invitation-manager');
+  await populateInvitationManager();
+}
+
 async function checkPendingInvites(user) {
   if (!user?.email) return;
   let invites;
@@ -281,6 +532,31 @@ async function checkPendingInvites(user) {
   const list = document.getElementById('pending-invites-list');
   if (!list) return;
   list.innerHTML = '';
+
+  if (_state.tier !== 'premium') {
+    const notice = document.createElement('div');
+    notice.className = 'invitation-empty';
+    notice.innerHTML = `
+      <p style="margin-bottom:8px">You have <strong>${invites.length}</strong> pending invitation(s), but collaboration requires a <strong>Premium</strong> subscription.</p>
+      <button class="btn-primary btn-sm" id="invite-upgrade-btn" type="button">Upgrade to Premium</button>`;
+    list.appendChild(notice);
+    document.getElementById('invite-upgrade-btn')?.addEventListener('click', openInviteUpgrade, { once: true });
+    openModal('pending-invites');
+    return;
+  }
+
+  const refreshPendingInvites = async () => {
+    const remainingInvites = await getPendingInvites(user.email);
+    if (!remainingInvites.length) {
+      closeModal('pending-invites');
+      return;
+    }
+    renderReceivedInvites(list, remainingInvites, { onChanged: refreshPendingInvites });
+  };
+
+  renderReceivedInvites(list, invites, { onChanged: refreshPendingInvites });
+  openModal('pending-invites');
+  return;
 
   for (const invite of invites) {
     const row = document.createElement('div');
@@ -890,6 +1166,11 @@ function wireStaticButtons() {
       changeStatusBtn.style.display = canAdmin() ? '' : 'none';
     }
 
+    const invitationsSection = document.getElementById('invitations-section');
+    if (invitationsSection) {
+      invitationsSection.style.display = _state.user ? '' : 'none';
+    }
+
     openModal('settings');
     loadStorageUsage().catch(() => {});
   });
@@ -1360,6 +1641,13 @@ function wireStaticButtons() {
   document.getElementById('browse-projects-btn')?.addEventListener('click', () => {
     closeModal('settings');
     openProjectBrowser();
+  });
+
+  document.getElementById('manage-invitations-btn')?.addEventListener('click', () => {
+    openInvitationManager().catch((err) => {
+      console.error('[invitationManager]', err);
+      showToast('Failed to open invitation manager', 'error');
+    });
   });
 
   // ── Project Status Change ───────────────────────────────────────────────

@@ -401,6 +401,39 @@ export async function getPendingInvites(email) {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
+/** Fetch all invites created by a given inviter. */
+export async function getSentInvites(invitedByUid) {
+  if (!invitedByUid) return [];
+  const q = query(
+    collection(db, 'invites'),
+    where('invitedByUid', '==', invitedByUid)
+  );
+  const snap = await getDocs(q);
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => {
+      const ta = a.createdAt?.seconds || 0;
+      const tb = b.createdAt?.seconds || 0;
+      return tb - ta;
+    });
+}
+
+export async function declineInvite(inviteId, declinedByUid = null) {
+  await updateDoc(doc(db, 'invites', inviteId), {
+    status: 'declined',
+    declinedByUid,
+    declinedAt: serverTimestamp(),
+  });
+}
+
+export async function revokeInvite(inviteId, revokedByUid = null) {
+  await updateDoc(doc(db, 'invites', inviteId), {
+    status: 'revoked',
+    revokedByUid,
+    revokedAt: serverTimestamp(),
+  });
+}
+
 /**
  * Sync a collaborator's display info to the project's collaboratorNames map.
  * Called when a user opens a project or accepts an invite, so the assignee
