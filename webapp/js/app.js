@@ -20,7 +20,7 @@ import { upsertUser, listenUser, listenProjects, inviteCollaborator, getProject,
   removeCollaborator, updateCollaboratorRole, getPendingInvites,
   acceptInvite, getSentInvites, getAcceptedInvites, declineInvite, revokeInvite,
   syncCollaboratorInfo, updateProjectStatus,
-  getProjectAuditLog, logUserAction } from './db.js';
+  getProjectAuditLog, logUserAction, getInviteContacts, upsertInviteContact } from './db.js';
 import { configure as configureStorage, getProjects, createProject, updateProject,
   deleteProject, hardDeleteProject, getColumns, getCards, createColumn, deleteColumn,
   getDeletedProjects, restoreDeletedProject, migrateLocalToCloud, adoptAnonymousData, setUserRole, canEdit, canAdmin,
@@ -45,6 +45,9 @@ const HARD_DELETE_CONFIRM_TEXT = 'DELETE';
 let _newProjectColorPicker = null;
 let _editProjectColorPicker = null;
 let _editProjectColor = '#6c63ff';
+let _inviteContacts = [];
+let _selectedInviteContactEmail = null;
+let _inviteModalTab = 'invite';
 
 let _state = {
   user:             null,
@@ -1247,10 +1250,219 @@ function wireStaticButtons() {
     if (searchClear) searchClear.style.display = 'none';
   };
 
+  const inviteTabInviteBtn = document.getElementById('invite-tab-invite-btn');
+  const inviteTabContactsBtn = document.getElementById('invite-tab-contacts-btn');
+  const inviteTabPanel = document.getElementById('invite-tab-panel');
+  const contactsTabPanel = document.getElementById('contacts-tab-panel');
+  const inviteContactSearchInput = document.getElementById('invite-contact-search-input');
+  const inviteContactSelected = document.getElementById('invite-contact-selected');
+  const inviteContactOptions = document.getElementById('invite-contact-options');
+  const inviteContactsList = document.getElementById('invite-contacts-list');
+  const inviteContactNameInput = document.getElementById('invite-contact-name-input');
+  const inviteContactEmailInput = document.getElementById('invite-contact-email-input');
+  const sendInviteBtn = document.getElementById('send-invite-btn');
+
+  const formatInviteContactLabel = (contact) => {
+    if (!contact) return '';
+    const name = contact.name?.trim();
+    return name ? `${name} (${contact.email})` : contact.email;
+  };
+
+  const getSelectedInviteContact = () => (
+    _inviteContacts.find((contact) => contact.email === _selectedInviteContactEmail) ?? null
+  );
+
+  const updateInviteSendButtonState = () => {
+    if (!sendInviteBtn) return;
+    sendInviteBtn.disabled = _inviteModalTab !== 'invite' || !_selectedInviteContactEmail;
+  };
+
+  const setInviteModalTab = (tab) => {
+    _inviteModalTab = tab;
+    inviteTabInviteBtn?.classList.toggle('active', tab === 'invite');
+    inviteTabContactsBtn?.classList.toggle('active', tab === 'contacts');
+    inviteTabPanel?.classList.toggle('hidden', tab !== 'invite');
+    contactsTabPanel?.classList.toggle('hidden', tab !== 'contacts');
+    updateInviteSendButtonState();
+  };
+
+  const renderSelectedInviteContact = () => {
+    if (!inviteContactSelected) return;
+    const contact = getSelectedInviteContact();
+    if (!contact) {
+      inviteContactSelected.classList.add('hidden');
+      inviteContactSelected.textContent = '';
+      return;
+    }
+
+    inviteContactSelected.classList.remove('hidden');
+    inviteContactSelected.textContent = `Selected contact: ${formatInviteContactLabel(contact)}`;
+  };
+
+  const getFilteredInviteContacts = (query = '') => {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) return _inviteContacts;
+
+    return _inviteContacts.filter((contact) => {
+      const haystack = [contact.name, contact.email]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(normalizedQuery);
+    });
+  };
+
+  function renderInviteContactOptions(query = '') {
+    if (!inviteContactOptions) return;
+
+    inviteContactOptions.innerHTML = '';
+
+    if (!_inviteContacts.length) {
+      inviteContactOptions.innerHTML = '<div class="invite-contact-empty">No contacts yet. Add one in the Contacts tab before sending an invite.</div>';
+      return;
+    }
+
+    const contacts = getFilteredInviteContacts(query);
+    if (!contacts.length) {
+      inviteContactOptions.innerHTML = '<div class="invite-contact-empty">No contacts match your search.</div>';
+      return;
+    }
+
+    for (const contact of contacts) {
+      const option = document.createElement('button');
+      option.type = 'button';
+      option.className = 'invite-contact-option' + (contact.email === _selectedInviteContactEmail ? ' is-selected' : '');
+      option.innerHTML = `
+        <span class="invite-contact-details">
+          <span class="invite-contact-name">${escapeHtml(contact.name || contact.email)}</span>
+          <span class="invite-contact-email">${escapeHtml(contact.email)}</span>
+        </span>`;
+      option.addEventListener('click', () => {
+        _selectedInviteContactEmail = contact.email;
+        if (inviteContactSearchInput) {
+          inviteContactSearchInput.value = formatInviteContactLabel(contact);
+        }
+        renderSelectedInviteContact();
+        renderInviteContactOptions(inviteContactSearchInput?.value ?? '');
+        updateInviteSendButtonState();
+      });
+      inviteContactOptions.appendChild(option);
+    }
+  }
+
+  const renderInviteContactsList = () => {
+    if (!inviteContactsList) return;
+
+    inviteContactsList.innerHTML = '';
+    if (!_inviteContacts.length) {
+      inviteContactsList.innerHTML = '<div class="invite-contact-empty">No contacts saved yet.</div>';
+      return;
+    }
+
+    for (const contact of _inviteContacts) {
+      const row = document.createElement('div');
+      row.className = 'invite-contact-row';
+      row.innerHTML = `
+        <div class="invite-contact-details">
+          <div class="invite-contact-name">${escapeHtml(contact.name || contact.email)}</div>
+          <div class="invite-contact-email">${escapeHtml(contact.email)}</div>
+        </div>
+        <button class="btn-ghost" type="button">Use in Invite</button>`;
+      row.querySelector('button')?.addEventListener('click', () => {
+        _selectedInviteContactEmail = contact.email;
+        if (inviteContactSearchInput) {
+          inviteContactSearchInput.value = formatInviteContactLabel(contact);
+        }
+        renderSelectedInviteContact();
+        renderInviteContactOptions(inviteContactSearchInput?.value ?? '');
+        setInviteModalTab('invite');
+        inviteContactSearchInput?.focus();
+      });
+      inviteContactsList.appendChild(row);
+    }
+  };
+
+  const loadInviteContactsForModal = async () => {
+    _inviteContacts = _state.user?.uid ? await getInviteContacts(_state.user.uid) : [];
+
+    if (_selectedInviteContactEmail && !_inviteContacts.some((contact) => contact.email === _selectedInviteContactEmail)) {
+      _selectedInviteContactEmail = null;
+    }
+
+    renderSelectedInviteContact();
+    renderInviteContactOptions(inviteContactSearchInput?.value ?? '');
+    renderInviteContactsList();
+    updateInviteSendButtonState();
+  };
+
+  inviteTabInviteBtn?.addEventListener('click', () => setInviteModalTab('invite'));
+  inviteTabContactsBtn?.addEventListener('click', () => setInviteModalTab('contacts'));
+  inviteContactSearchInput?.addEventListener('input', () => {
+    const selectedContact = getSelectedInviteContact();
+    if (selectedContact && inviteContactSearchInput.value.trim() !== formatInviteContactLabel(selectedContact)) {
+      _selectedInviteContactEmail = null;
+    }
+    renderSelectedInviteContact();
+    renderInviteContactOptions(inviteContactSearchInput.value);
+    updateInviteSendButtonState();
+  });
+  document.getElementById('add-invite-contact-btn')?.addEventListener('click', async () => {
+    const name = inviteContactNameInput?.value?.trim() ?? '';
+    const email = inviteContactEmailInput?.value?.trim()?.toLowerCase?.() ?? '';
+
+    if (!name || !email || !email.includes('@')) {
+      showToast('Enter a valid contact name and email address', 'warning');
+      return;
+    }
+
+    if (!_state.user?.uid) {
+      showToast('Sign in to save contacts', 'warning');
+      return;
+    }
+
+    try {
+      await upsertInviteContact(_state.user.uid, { name, email });
+      if (inviteContactNameInput) inviteContactNameInput.value = '';
+      if (inviteContactEmailInput) inviteContactEmailInput.value = '';
+      await loadInviteContactsForModal();
+      const savedContact = _inviteContacts.find((contact) => contact.email === email);
+      if (savedContact) {
+        _selectedInviteContactEmail = savedContact.email;
+        if (inviteContactSearchInput) {
+          inviteContactSearchInput.value = formatInviteContactLabel(savedContact);
+        }
+      }
+      renderSelectedInviteContact();
+      renderInviteContactOptions(inviteContactSearchInput?.value ?? '');
+      setInviteModalTab('invite');
+      showToast('Contact saved', 'success');
+    } catch (err) {
+      console.error('[inviteContact]', err);
+      showToast('Failed to save contact', 'error');
+    }
+  });
+
   // ── Invite button ───────────────────────────────────────────────────────
   document.getElementById('invite-btn')?.addEventListener('click', async () => {
+    _selectedInviteContactEmail = null;
+    _inviteModalTab = 'invite';
+    if (inviteContactSearchInput) inviteContactSearchInput.value = '';
+    if (inviteContactNameInput) inviteContactNameInput.value = '';
+    if (inviteContactEmailInput) inviteContactEmailInput.value = '';
     openModal('invite');
-    await populateCollaborators(_state.currentProjectId);
+    try {
+      await Promise.all([
+        loadInviteContactsForModal(),
+        populateCollaborators(_state.currentProjectId),
+      ]);
+    } catch (err) {
+      console.error('[inviteModal]', err);
+      showToast('Failed to load invite contacts', 'error');
+    }
+    setInviteModalTab(_inviteContacts.length ? 'invite' : 'contacts');
+    setTimeout(() => {
+      (_inviteContacts.length ? inviteContactSearchInput : inviteContactNameInput)?.focus();
+    }, 50);
   });
 
   // ── Manage Billing ──────────────────────────────────────────────────────
@@ -1698,11 +1910,12 @@ function wireStaticButtons() {
   // ── Invite Modal ────────────────────────────────────────────────────────
 
   document.getElementById('send-invite-btn')?.addEventListener('click', async () => {
-    const email = document.getElementById('invite-email-input').value.trim();
+    const contact = _inviteContacts.find((entry) => entry.email === _selectedInviteContactEmail) ?? null;
+    const email = contact?.email?.trim?.() ?? '';
     const role  = document.getElementById('invite-role-select').value;
 
-    if (!email || !email.includes('@')) {
-      showToast('Enter a valid email address', 'warning');
+    if (!contact || !email || !email.includes('@')) {
+      showToast('Select a saved contact before sending an invite', 'warning');
       return;
     }
 
@@ -1718,7 +1931,11 @@ function wireStaticButtons() {
         name: _state.user?.displayName ?? _state.user?.email ?? 'A FlowLane user',
       };
       await inviteCollaborator(_state.currentProjectId, email, role, inviter);
-      document.getElementById('invite-email-input').value = '';
+      _selectedInviteContactEmail = null;
+      if (inviteContactSearchInput) inviteContactSearchInput.value = '';
+      renderSelectedInviteContact();
+      renderInviteContactOptions('');
+      updateInviteSendButtonState();
       showToast(`Invite sent to ${email}`, 'success');
     } catch (err) {
       console.error('[invite]', err);

@@ -900,26 +900,54 @@
         </button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label" for="invite-email-input">Email Address</label>
-          <input type="email" id="invite-email-input" class="form-input" placeholder="colleague@example.com" />
+        <div class="invite-modal-tabs">
+          <button id="invite-tab-invite-btn" class="invite-modal-tab active" type="button">Invite</button>
+          <button id="invite-tab-contacts-btn" class="invite-modal-tab" type="button">Contacts</button>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="invite-role-select">Permission</label>
-          <select id="invite-role-select" class="form-input">
-            <option value="editor">Editor (can edit cards)</option>
-            <option value="viewer">Viewer (read only)</option>
-            <option value="admin">Admin (full access)</option>
-          </select>
+
+        <div id="invite-tab-panel" class="invite-panel">
+          <div class="form-group">
+            <label class="form-label" for="invite-contact-search-input">Contact</label>
+            <input type="text" id="invite-contact-search-input" class="form-input" placeholder="Search contacts by name or email" autocomplete="off" />
+            <div id="invite-contact-selected" class="invite-contact-selected hidden"></div>
+            <div id="invite-contact-options" class="invite-contact-options"></div>
+            <p class="invite-contact-hint">Select a saved contact to send an invite. Add contacts first in the Contacts tab.</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="invite-role-select">Permission</label>
+            <select id="invite-role-select" class="form-input">
+              <option value="editor">Editor (can edit cards)</option>
+              <option value="viewer">Viewer (read only)</option>
+              <option value="admin">Admin (full access)</option>
+            </select>
+          </div>
+          <div id="collaborators-list-section">
+            <label class="form-label" style="margin-top:12px">Current Collaborators</label>
+            <div id="current-collaborators" class="collaborators-list"></div>
+          </div>
         </div>
-        <div id="collaborators-list-section">
-          <label class="form-label" style="margin-top:12px">Current Collaborators</label>
-          <div id="current-collaborators" class="collaborators-list"></div>
+
+        <div id="contacts-tab-panel" class="invite-panel hidden">
+          <div class="invite-contacts-form">
+            <div class="form-group">
+              <label class="form-label" for="invite-contact-name-input">Name</label>
+              <input type="text" id="invite-contact-name-input" class="form-input" placeholder="Jane Smith" autocomplete="off" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="invite-contact-email-input">Email Address</label>
+              <input type="email" id="invite-contact-email-input" class="form-input" placeholder="jane@example.com" autocomplete="off" />
+            </div>
+            <button id="add-invite-contact-btn" class="btn-primary" type="button">Add Contact</button>
+          </div>
+          <div class="form-group invite-contacts-list-group">
+            <label class="form-label">Saved Contacts</label>
+            <div id="invite-contacts-list" class="invite-contacts-list"></div>
+          </div>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn-ghost" data-close="invite" type="button">Close</button>
-        <button class="btn-primary" id="send-invite-btn" type="button">Send Invite</button>
+        <button class="btn-primary" id="send-invite-btn" type="button" disabled>Send Invite</button>
       </div>
     </div>
   </div>

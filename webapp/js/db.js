@@ -51,6 +51,37 @@ export async function logUserAction(uid, action, details = {}) {
   });
 }
 
+function normalizeInviteContactEmail(email = '') {
+  return email.trim().toLowerCase();
+}
+
+export async function getInviteContacts(uid) {
+  if (!uid) return [];
+
+  const snap = await getDocs(collection(db, 'users', uid, 'contacts'));
+  return snap.docs
+    .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+    .sort((a, b) => {
+      const nameA = (a.name ?? a.email ?? '').toLowerCase();
+      const nameB = (b.name ?? b.email ?? '').toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+}
+
+export async function upsertInviteContact(uid, { name, email }) {
+  const normalizedEmail = normalizeInviteContactEmail(email);
+  if (!uid || !normalizedEmail) return null;
+
+  const contactRef = doc(db, 'users', uid, 'contacts', normalizedEmail);
+  await setDoc(contactRef, {
+    name: (name ?? '').trim(),
+    email: normalizedEmail,
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+
+  return normalizedEmail;
+}
+
 export function listenUser(uid, callback) {
   return onSnapshot(doc(db, 'users', uid), (snap) => {
     callback(snap.exists() ? { id: snap.id, ...snap.data() } : null);
