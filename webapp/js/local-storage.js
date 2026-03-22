@@ -7,13 +7,15 @@
  *
  * Schema (all stored under the "flowlane_v1" key):
  * {
- *   projects: { [id]: ProjectDoc },
- *   columns:  { [projectId]: { [id]: ColumnDoc } },
- *   cards:    { [projectId]: { [columnId]: { [id]: CardDoc } } },
+ *   projects:        { [id]: ProjectDoc },
+ *   deletedProjects: { [id]: DeletedProjectDoc },
+ *   columns:         { [projectId]: { [id]: ColumnDoc } },
+ *   cards:           { [projectId]: { [columnId]: { [id]: CardDoc } } },
  * }
  */
 
 let _rootKey = 'flowlane_v1';
+const SOFT_DELETE_RETENTION_MS = 60 * 24 * 60 * 60 * 1000;
 
 /** Call this when a user signs in or signs out to namespace data per account. */
 export function setLocalUser(uid) {
@@ -25,9 +27,16 @@ export function setLocalUser(uid) {
 function getRoot() {
   try {
     const raw = localStorage.getItem(_rootKey);
-    return raw ? JSON.parse(raw) : { projects: {}, columns: {}, cards: {} };
+    const data = raw ? JSON.parse(raw) : null;
+    return {
+      projects: {},
+      deletedProjects: {},
+      columns: {},
+      cards: {},
+      ...(data ?? {}),
+    };
   } catch {
-    return { projects: {}, columns: {}, cards: {} };
+    return { projects: {}, deletedProjects: {}, columns: {}, cards: {} };
   }
 }
 
@@ -39,6 +48,14 @@ function saveRoot(root) {
 
 export function localId() {
   return `local_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function cloneLocalData(value) {
+  return JSON.parse(JSON.stringify(value ?? {}));
+}
+
+function getRestoreUntilMs(project = {}) {
+  return project.restoreUntil ?? ((project.deletedAt ?? 0) ? (project.deletedAt + SOFT_DELETE_RETENTION_MS) : 0);
 }
 
 // -- PROJECTS ---------------------------------------------------------------
@@ -90,6 +107,81 @@ export async function localUpdateProject(projectId, data) {
 }
 
 export async function localDeleteProject(projectId) {
+  const root = getRoot();
+  const project = root.projects[projectId];
+  if (!project) return;
+
+  const deletedAt = Date.now();
+
+  root.deletedProjects[projectId] = {
+    id: projectId,
+    name: project.name ?? 'Untitled Project',
+    color: project.color ?? '#6366f1',
+    code: project.code ?? '',
+    ownerId: project.ownerId ?? 'local',
+    projectStatus: project.projectStatus ?? 'new',
+    createdAt: project.createdAt ?? Date.now(),
+    deletedAt,
+    restoreUntil: deletedAt + SOFT_DELETE_RETENTION_MS,
+    deleteMode: 'soft',
+    project: cloneLocalData(project),
+    columns: cloneLocalData(root.columns[projectId]),
+    cards: cloneLocalData(root.cards[projectId]),
+  };
+
+  delete root.projects[projectId];
+  delete root.columns[projectId];
+  delete root.cards[projectId];
+  saveRoot(root);
+}
+
+export async function localGetDeletedProjects() {
+  const root = getRoot();
+  const now = Date.now();
+  const deletedProjects = Object.values(root.deletedProjects ?? {});
+  let removedExpired = false;
+
+  for (const project of deletedProjects) {
+    const restoreUntil = getRestoreUntilMs(project);
+    if (restoreUntil && restoreUntil < now) {
+      delete root.deletedProjects[project.id];
+      removedExpired = true;
+    }
+  }
+
+  if (removedExpired) {
+    saveRoot(root);
+  }
+
+  return Object.values(root.deletedProjects ?? {})
+    .sort((a, b) => (b.deletedAt ?? 0) - (a.deletedAt ?? 0));
+}
+
+export async function localRestoreDeletedProject(projectId) {
+  const root = getRoot();
+  const archived = root.deletedProjects?.[projectId];
+  if (!archived) return null;
+  if (getRestoreUntilMs(archived) && getRestoreUntilMs(archived) < Date.now()) {
+    delete root.deletedProjects[projectId];
+    saveRoot(root);
+    throw new Error('RESTORE_EXPIRED');
+  }
+
+  root.projects[projectId] = {
+    ...cloneLocalData(archived.project),
+    id: projectId,
+    updatedAt: Date.now(),
+    restoredAt: Date.now(),
+  };
+  root.columns[projectId] = cloneLocalData(archived.columns);
+  root.cards[projectId] = cloneLocalData(archived.cards);
+
+  delete root.deletedProjects[projectId];
+  saveRoot(root);
+  return projectId;
+}
+
+export async function localHardDeleteProject(projectId) {
   const root = getRoot();
   delete root.projects[projectId];
   delete root.columns[projectId];
@@ -212,7 +304,7 @@ export async function exportLocalData() {
 }
 
 export async function clearLocalData() {
-  saveRoot({ projects: {}, columns: {}, cards: {} });
+  saveRoot({ projects: {}, deletedProjects: {}, columns: {}, cards: {} });
 }
 
 /**

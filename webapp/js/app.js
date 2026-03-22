@@ -20,10 +20,10 @@ import { upsertUser, listenUser, listenProjects, inviteCollaborator, getProject,
   removeCollaborator, updateCollaboratorRole, getPendingInvites,
   acceptInvite, getSentInvites, getAcceptedInvites, declineInvite, revokeInvite,
   syncCollaboratorInfo, updateProjectStatus,
-  getProjectAuditLog } from './db.js';
+  getProjectAuditLog, logUserAction } from './db.js';
 import { configure as configureStorage, getProjects, createProject, updateProject,
-  deleteProject, getColumns, getCards, createColumn, deleteColumn,
-  migrateLocalToCloud, adoptAnonymousData, setUserRole, canEdit, canAdmin,
+  deleteProject, hardDeleteProject, getColumns, getCards, createColumn, deleteColumn,
+  getDeletedProjects, restoreDeletedProject, migrateLocalToCloud, adoptAnonymousData, setUserRole, canEdit, canAdmin,
   getStorageUsage, isPremiumMode } from './storage.js';
 import { renderBoard, clearFilters, setSwimlaneMode, getSwimlaneMode, loadSwimlanePref,
   searchCards, getAnalyticsData } from './board.js';
@@ -38,6 +38,7 @@ import { showToast, openModal, closeModal, initModalOverlays,
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const FREE_LIMIT = 3;
+const HARD_DELETE_CONFIRM_TEXT = 'DELETE';
 
 // ── State ─────────────────────────────────────────────────────────────────────
 // Color state managed inline per modal (new-project / edit-project)
@@ -54,11 +55,30 @@ let _state = {
   selectedPlan:     'monthly',
   isDowngraded:     false,
   pendingInviteCheckKey: null,
+  deleteFlow:       null,
 };
 
 // Expose current project ID globally so board.js / card-modal.js can access it
 window._currentProjectId = null;
 window._refreshBoard     = loadCurrentBoard;
+
+function logProjectManagerAction(action, details = {}) {
+  const projectId = details.projectId ?? _state.deleteFlow?.projectId ?? _state.currentProjectId ?? null;
+  const projectName = details.projectName
+    ?? _state.deleteFlow?.projectName
+    ?? _state.projects.find((x) => x.id === projectId)?.name
+    ?? null;
+
+  logUserAction(_state.user?.uid, action, {
+    context: 'project_manager',
+    platform: 'webapp',
+    projectId,
+    projectName,
+    ...details,
+  }).catch((err) => {
+    console.warn('[logUserAction]', err);
+  });
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // BOOT
@@ -1541,32 +1561,118 @@ function wireStaticButtons() {
 
   // ── Delete Project ──────────────────────────────────────────────────────
 
-  async function handleDeleteProject(closeModalName) {
-    const p = _state.projects.find(x => x.id === _state.currentProjectId);
-    if (!p) return;
-    if (!confirm(`Delete project "${p.name}" and all its data? This cannot be undone.`)) return;
+  function resetDeleteProjectFlow() {
+    _state.deleteFlow = null;
+    const input = document.getElementById('hard-delete-project-input');
+    const confirmBtn = document.getElementById('confirm-hard-delete-project-btn');
+    if (input) input.value = '';
+    if (confirmBtn) confirmBtn.disabled = true;
+  }
+
+  function openDeleteProjectFlow(sourceModalName) {
+    const project = _state.projects.find((x) => x.id === _state.currentProjectId);
+    if (!project) return;
+
+    _state.deleteFlow = {
+      projectId: project.id,
+      projectName: project.name ?? 'Untitled Project',
+      sourceModalName,
+    };
+
+    const deleteCopy = document.getElementById('delete-project-copy');
+    const hardDeleteCopy = document.getElementById('hard-delete-project-copy');
+    const input = document.getElementById('hard-delete-project-input');
+    const confirmBtn = document.getElementById('confirm-hard-delete-project-btn');
+
+    if (deleteCopy) {
+      deleteCopy.textContent = `Choose how you want to delete "${project.name}". Soft delete keeps it in Deleted Projects for 60 days.`;
+    }
+    if (hardDeleteCopy) {
+      hardDeleteCopy.textContent = `Are you sure? This will permanently delete "${project.name}" and it will not be recoverable.`;
+    }
+    if (input) input.value = '';
+    if (confirmBtn) confirmBtn.disabled = true;
+
+    logProjectManagerAction('project_delete_dialog_opened', { sourceModalName });
+
+    closeModal(sourceModalName);
+    closeModal('hard-delete-project');
+    openModal('delete-project');
+  }
+
+  async function finishProjectDeletion(mode) {
+    const flow = _state.deleteFlow;
+    if (!flow?.projectId) return;
+
+    const projectId = flow.projectId;
 
     try {
-      await deleteProject(_state.currentProjectId);
-      _state.projects = _state.projects.filter(x => x.id !== _state.currentProjectId);
-      renderProjectList();
-      closeModal(closeModalName);
-
-      if (_state.projects.length > 0) {
-        await selectProject(_state.projects[0].id);
+      if (mode === 'hard') {
+        await hardDeleteProject(projectId);
       } else {
-        await createDefaultProject();
+        await deleteProject(projectId);
       }
-      showToast('Project deleted', 'success');
+
+      _state.projects = _state.projects.filter((x) => x.id !== projectId);
+      renderProjectList();
+      closeModal('delete-project');
+      closeModal('hard-delete-project');
+
+      if (_state.currentProjectId === projectId) {
+        if (_state.projects.length > 0) {
+          await selectProject(_state.projects[0].id);
+        } else {
+          await createDefaultProject();
+        }
+      }
+
+      logProjectManagerAction(
+        mode === 'hard' ? 'project_hard_deleted' : 'project_soft_deleted',
+        { deleteMode: mode, projectId: flow.projectId, projectName: flow.projectName }
+      );
+      showToast(mode === 'hard' ? 'Project permanently deleted' : 'Project moved to Deleted Projects', 'success');
     } catch (err) {
-      showToast('Failed to delete project', 'error');
+      console.error('[projectDelete]', err);
+      logProjectManagerAction('project_delete_failed', {
+        deleteMode: mode,
+        projectId: flow.projectId,
+        projectName: flow.projectName,
+        errorMessage: err?.message ?? 'Unknown error',
+      });
+      showToast(mode === 'hard' ? 'Failed to permanently delete project' : 'Failed to delete project', 'error');
+    } finally {
+      resetDeleteProjectFlow();
     }
   }
 
-  // Delete from edit-project modal
-  document.getElementById('delete-project-btn')?.addEventListener('click', () => handleDeleteProject('edit-project'));
-  // Delete from settings modal
-  document.getElementById('settings-delete-project-btn')?.addEventListener('click', () => handleDeleteProject('settings'));
+  document.getElementById('delete-project-btn')?.addEventListener('click', () => openDeleteProjectFlow('edit-project'));
+  document.getElementById('settings-delete-project-btn')?.addEventListener('click', () => openDeleteProjectFlow('settings'));
+  document.getElementById('soft-delete-project-confirm-btn')?.addEventListener('click', () => {
+    logProjectManagerAction('project_soft_delete_selected', { deleteMode: 'soft' });
+    finishProjectDeletion('soft');
+  });
+  document.getElementById('open-hard-delete-project-btn')?.addEventListener('click', () => {
+    logProjectManagerAction('project_hard_delete_selected', { deleteMode: 'hard' });
+    closeModal('delete-project');
+    openModal('hard-delete-project');
+    setTimeout(() => document.getElementById('hard-delete-project-input')?.focus(), 50);
+  });
+  document.getElementById('cancel-hard-delete-project-btn')?.addEventListener('click', () => {
+    logProjectManagerAction('project_hard_delete_cancelled', { deleteMode: 'hard' });
+    closeModal('hard-delete-project');
+    openModal('delete-project');
+  });
+  document.getElementById('hard-delete-project-input')?.addEventListener('input', (event) => {
+    const value = event.target?.value?.trim?.().toUpperCase?.() ?? '';
+    const confirmBtn = document.getElementById('confirm-hard-delete-project-btn');
+    if (confirmBtn) confirmBtn.disabled = value !== HARD_DELETE_CONFIRM_TEXT;
+  });
+  document.getElementById('confirm-hard-delete-project-btn')?.addEventListener('click', () => {
+    const value = document.getElementById('hard-delete-project-input')?.value?.trim?.().toUpperCase?.() ?? '';
+    if (value !== HARD_DELETE_CONFIRM_TEXT) return;
+    logProjectManagerAction('project_hard_delete_confirmed', { deleteMode: 'hard' });
+    finishProjectDeletion('hard');
+  });
 
   // ── Upgrade Modal ───────────────────────────────────────────────────────
 
@@ -1753,7 +1859,10 @@ function wireStaticButtons() {
 
   document.getElementById('browse-projects-btn')?.addEventListener('click', () => {
     closeModal('settings');
-    openProjectBrowser();
+    openProjectBrowser().catch((err) => {
+      console.error('[openProjectBrowser]', err);
+      showToast('Failed to open project manager', 'error');
+    });
   });
 
   document.getElementById('manage-invitations-btn')?.addEventListener('click', () => {
@@ -1881,7 +1990,7 @@ function wireStaticButtons() {
 // PROJECT BROWSER
 // ══════════════════════════════════════════════════════════════════════════════
 
-function openProjectBrowser() {
+function openProjectBrowserLegacy() {
   const listEl = document.getElementById('project-browser-list');
   const searchInput = document.getElementById('project-browser-search-input');
 
@@ -1966,6 +2075,263 @@ function openProjectBrowser() {
 
   openModal('project-browser');
   setTimeout(() => searchInput?.focus(), 50);
+}
+
+async function openProjectBrowser() {
+  const listEl = document.getElementById('project-browser-list');
+  const searchInput = document.getElementById('project-browser-search-input');
+  const helpEl = document.getElementById('project-browser-help');
+  const currentTabBtn = document.getElementById('project-browser-tab-current');
+  const deletedTabBtn = document.getElementById('project-browser-tab-deleted');
+
+  if (!listEl || !searchInput || !helpEl || !currentTabBtn || !deletedTabBtn) return;
+
+  let activeTab = 'current';
+  let deletedProjects = [];
+  let deletedProjectsLoading = true;
+  let deletedProjectsError = '';
+
+  const toDate = (value) => {
+    if (!value) return null;
+    if (typeof value?.toDate === 'function') {
+      const date = value.toDate();
+      return Number.isNaN(date?.getTime?.()) ? null : date;
+    }
+    if (typeof value?.seconds === 'number') {
+      const date = new Date(value.seconds * 1000);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  const formatDate = (value, fallback = 'Unknown date') => {
+    const date = toDate(value);
+    if (!date) return fallback;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const getRestoreUntilValue = (project) => {
+    if (project?.restoreUntil) return project.restoreUntil;
+    const deletedDate = toDate(project?.deletedAt);
+    return deletedDate ? new Date(deletedDate.getTime() + (60 * 24 * 60 * 60 * 1000)) : null;
+  };
+
+  const getStatusLabel = (status = 'new') => {
+    if (status === 'in-progress') return 'In Progress';
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
+  const matchesFilter = (project, filter) => {
+    const query = filter.trim().toLowerCase();
+    if (!query) return true;
+
+    const haystack = [
+      project.name,
+      project.code,
+      getStatusLabel(project.projectStatus ?? 'new'),
+      project.description,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    return haystack.includes(query);
+  };
+
+  const renderEmptyState = (message) => {
+    listEl.innerHTML = `<div class="project-browser-empty">${escapeHtml(message)}</div>`;
+  };
+
+  const updateTabState = () => {
+    currentTabBtn.classList.toggle('active', activeTab === 'current');
+    deletedTabBtn.classList.toggle('active', activeTab === 'deleted');
+    helpEl.textContent = activeTab === 'current'
+      ? 'All current projects, including completed, cancelled, and deferred boards.'
+      : 'Projects you deleted and can restore. Restoring brings back cards and collaborators.';
+  };
+
+  const renderCurrentProjects = (filter) => {
+    const projects = [..._state.projects]
+      .filter((project) => matchesFilter(project, filter));
+
+    if (!projects.length) {
+      renderEmptyState(filter ? 'No current projects match your search.' : 'No current projects yet.');
+      return;
+    }
+
+    for (const project of projects) {
+      const status = project.projectStatus ?? 'new';
+      const item = document.createElement('div');
+      item.className = 'project-browser-item' + (project.id === _state.currentProjectId ? ' active' : '');
+
+      item.innerHTML = `
+        <div class="project-browser-item__main">
+          <div class="project-browser-item__name">${escapeHtml(project.name ?? 'Untitled Project')}</div>
+          <div class="project-browser-item__meta">
+            ${escapeHtml(project.code ?? 'PROJECT')} &middot; Created ${escapeHtml(formatDate(project.createdAt))}
+          </div>
+        </div>
+        <div class="project-browser-item__actions">
+          <span class="project-status-badge project-status-badge--${escapeHtml(status)}">${escapeHtml(getStatusLabel(status))}</span>
+          <div class="project-browser-item__dates">${escapeHtml(formatDate(project.updatedAt ?? project.createdAt))}</div>
+        </div>`;
+
+      const dot = document.createElement('div');
+      dot.className = 'project-dot';
+      dot.style.background = project.color ?? '#6366f1';
+      item.prepend(dot);
+
+      item.addEventListener('click', async () => {
+        closeModal('project-browser');
+        await selectProject(project.id);
+      });
+
+      listEl.appendChild(item);
+    }
+  };
+
+  const renderDeletedProjects = (filter) => {
+    if (deletedProjectsLoading) {
+      renderEmptyState('Loading deleted projects...');
+      return;
+    }
+
+    if (deletedProjectsError) {
+      renderEmptyState(deletedProjectsError);
+      return;
+    }
+
+    const projects = deletedProjects.filter((project) => matchesFilter(project, filter));
+    if (!projects.length) {
+      renderEmptyState(filter ? 'No deleted projects match your search.' : 'No deleted projects yet.');
+      return;
+    }
+
+    for (const project of projects) {
+      const status = project.projectStatus ?? 'new';
+      const item = document.createElement('div');
+      item.className = 'project-browser-item project-browser-item--deleted';
+
+      item.innerHTML = `
+        <div class="project-browser-item__main">
+          <div class="project-browser-item__name">${escapeHtml(project.name ?? 'Untitled Project')}</div>
+          <div class="project-browser-item__meta">
+            Status: ${escapeHtml(getStatusLabel(status))} &middot; Deleted ${escapeHtml(formatDate(project.deletedAt))} &middot; Restore until ${escapeHtml(formatDate(getRestoreUntilValue(project)))}
+          </div>
+        </div>
+        <div class="project-browser-item__actions">
+          <span class="project-status-badge project-status-badge--${escapeHtml(status)}">${escapeHtml(getStatusLabel(status))}</span>
+          <button class="btn-primary btn-sm project-browser-item__restore" type="button">Restore</button>
+        </div>`;
+
+      const dot = document.createElement('div');
+      dot.className = 'project-dot';
+      dot.style.background = project.color ?? '#6366f1';
+      item.prepend(dot);
+
+      const restoreBtn = item.querySelector('.project-browser-item__restore');
+      restoreBtn?.addEventListener('click', async (event) => {
+        event.stopPropagation();
+        if (!restoreBtn) return;
+
+        logProjectManagerAction('project_restore_requested', {
+          projectId: project.originalProjectId ?? project.id,
+          projectName: project.name ?? 'Untitled Project',
+          deletedProjectId: project.id,
+          restoreUntil: getRestoreUntilValue(project),
+        });
+        restoreBtn.disabled = true;
+        restoreBtn.textContent = 'Restoring...';
+
+        try {
+          await restoreDeletedProject(project.id);
+          await loadProjects();
+          deletedProjectsLoading = true;
+          deletedProjectsError = '';
+          renderBrowserList(searchInput.value);
+          try {
+            deletedProjects = await getDeletedProjects();
+          } catch (err) {
+            console.error('[getDeletedProjects]', err);
+            deletedProjects = [];
+            deletedProjectsError = 'Could not load deleted projects.';
+          } finally {
+            deletedProjectsLoading = false;
+          }
+          renderBrowserList(searchInput.value);
+          logProjectManagerAction('project_restored', {
+            projectId: project.originalProjectId ?? project.id,
+            projectName: project.name ?? 'Untitled Project',
+            deletedProjectId: project.id,
+          });
+          showToast('Project restored', 'success');
+        } catch (err) {
+          console.error('[restoreDeletedProject]', err);
+          logProjectManagerAction('project_restore_failed', {
+            projectId: project.originalProjectId ?? project.id,
+            projectName: project.name ?? 'Untitled Project',
+            deletedProjectId: project.id,
+            errorMessage: err?.message ?? 'Unknown error',
+          });
+          showToast(
+            err?.message === 'OWNER_ONLY'
+              ? 'Only the project owner can restore this project.'
+              : err?.message === 'RESTORE_EXPIRED'
+                ? 'This recycle-bin item has expired and can no longer be restored.'
+                : err?.code === 'permission-denied'
+                  ? 'Restore needs the latest Firestore rules. Deploy firestore.rules and try again.'
+                : 'Failed to restore project',
+            'error',
+          );
+          restoreBtn.disabled = false;
+          restoreBtn.textContent = 'Restore';
+        }
+      });
+
+      listEl.appendChild(item);
+    }
+  };
+
+  function renderBrowserList(filter = '') {
+    listEl.innerHTML = '';
+    updateTabState();
+
+    if (activeTab === 'deleted') {
+      renderDeletedProjects(filter);
+      return;
+    }
+
+    renderCurrentProjects(filter);
+  }
+
+  currentTabBtn.onclick = () => {
+    activeTab = 'current';
+    renderBrowserList(searchInput.value);
+  };
+  deletedTabBtn.onclick = () => {
+    activeTab = 'deleted';
+    renderBrowserList(searchInput.value);
+  };
+
+  searchInput.value = '';
+  searchInput.oninput = () => renderBrowserList(searchInput.value);
+
+  renderBrowserList();
+  openModal('project-browser');
+  setTimeout(() => searchInput?.focus(), 50);
+
+  try {
+    deletedProjects = await getDeletedProjects();
+  } catch (err) {
+    console.error('[getDeletedProjects]', err);
+    deletedProjects = [];
+    deletedProjectsError = 'Could not load deleted projects.';
+  } finally {
+    deletedProjectsLoading = false;
+  }
+
+  renderBrowserList(searchInput.value);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

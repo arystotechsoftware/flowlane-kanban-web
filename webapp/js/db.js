@@ -24,6 +24,8 @@ import { app } from './auth.js';
 export const db      = getFirestore(app);
 export const storage = getStorage(app);
 
+const SOFT_DELETE_RETENTION_MS = 60 * 24 * 60 * 60 * 1000;
+
 // ---------------------------------------------------------------------------
 // USER
 // ---------------------------------------------------------------------------
@@ -38,6 +40,15 @@ export async function upsertUser(uid, data) {
     ...data,
     updatedAt: serverTimestamp(),
   }, { merge: true });
+}
+
+export async function logUserAction(uid, action, details = {}) {
+  if (!uid || !action) return;
+  await addDoc(collection(db, 'users', uid, 'actionLogs'), {
+    action,
+    details,
+    timestamp: serverTimestamp(),
+  });
 }
 
 export function listenUser(uid, callback) {
@@ -157,21 +168,234 @@ export async function getProjectAuditLog(projectId) {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-export async function deleteProject(projectId) {
-  // Delete all sub-collections first (shallow delete; production should use a Cloud Function)
-  const batch = writeBatch(db);
-  const cols = await getDocs(collection(db, 'projects', projectId, 'columns'));
-  for (const col of cols.docs) {
-    const cards = await getDocs(
-      collection(db, 'projects', projectId, 'columns', col.id, 'cards')
+async function getArchivedProjectContent(collectionName, projectId) {
+  const columnsSnap = await getDocs(collection(db, collectionName, projectId, 'columns'));
+  const columns = columnsSnap.docs.map((colDoc) => ({ id: colDoc.id, ...colDoc.data() }));
+  const cardsByColumn = {};
+
+  for (const column of columns) {
+    const cardsSnap = await getDocs(
+      collection(db, collectionName, projectId, 'columns', column.id, 'cards')
     );
-    for (const card of cards.docs) {
-      batch.delete(card.ref);
-    }
-    batch.delete(col.ref);
+    cardsByColumn[column.id] = cardsSnap.docs.map((cardDoc) => ({ id: cardDoc.id, ...cardDoc.data() }));
   }
-  batch.delete(doc(db, 'projects', projectId));
-  await batch.commit();
+
+  return { columns, cardsByColumn };
+}
+
+function toMillis(value) {
+  if (!value) return 0;
+  if (typeof value?.toDate === 'function') {
+    const date = value.toDate();
+    return Number.isNaN(date?.getTime?.()) ? 0 : date.getTime();
+  }
+  if (typeof value?.seconds === 'number') {
+    return value.seconds * 1000;
+  }
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+function getRestoreUntilMs(data = {}) {
+  return toMillis(data.restoreUntil) || (toMillis(data.deletedAt) ? toMillis(data.deletedAt) + SOFT_DELETE_RETENTION_MS : 0);
+}
+
+async function commitBatchOperations(operations) {
+  if (!operations.length) return;
+
+  let batch = writeBatch(db);
+  let operationCount = 0;
+
+  for (const operation of operations) {
+    if (operation.type === 'set') {
+      batch.set(operation.ref, operation.data);
+    } else if (operation.type === 'delete') {
+      batch.delete(operation.ref);
+    }
+
+    operationCount += 1;
+    if (operationCount === 400) {
+      await batch.commit();
+      batch = writeBatch(db);
+      operationCount = 0;
+    }
+  }
+
+  if (operationCount > 0) {
+    await batch.commit();
+  }
+}
+
+function stripDeletedProjectMetadata(data = {}) {
+  const { originalProjectId, deletedAt, restoreUntil, deleteMode, ...projectData } = data;
+  return projectData;
+}
+
+async function permanentlyDeleteProjectData(projectId, collectionName = 'projects') {
+  const { columns, cardsByColumn } = await getArchivedProjectContent(collectionName, projectId);
+  const baseRef = doc(db, collectionName, projectId);
+  const deleteOperations = [];
+
+  for (const column of columns) {
+    for (const card of cardsByColumn[column.id] ?? []) {
+      deleteOperations.push({
+        type: 'delete',
+        ref: doc(db, collectionName, projectId, 'columns', column.id, 'cards', card.id),
+      });
+    }
+    deleteOperations.push({
+      type: 'delete',
+      ref: doc(db, collectionName, projectId, 'columns', column.id),
+    });
+  }
+  deleteOperations.push({ type: 'delete', ref: baseRef });
+  await commitBatchOperations(deleteOperations);
+}
+
+export async function deleteProject(projectId) {
+  const projectRef = doc(db, 'projects', projectId);
+  const projectSnap = await getDoc(projectRef);
+  if (!projectSnap.exists()) return;
+
+  const projectData = projectSnap.data();
+  const { columns, cardsByColumn } = await getArchivedProjectContent('projects', projectId);
+  const deletedProjectRef = doc(db, 'deletedProjects', projectId);
+
+  await setDoc(deletedProjectRef, {
+    ...projectData,
+    originalProjectId: projectId,
+    deletedAt: serverTimestamp(),
+    restoreUntil: new Date(Date.now() + SOFT_DELETE_RETENTION_MS),
+    deleteMode: 'soft',
+  });
+
+  const archiveOperations = [];
+  for (const column of columns) {
+    const { id: columnId, ...columnData } = column;
+    archiveOperations.push({
+      type: 'set',
+      ref: doc(db, 'deletedProjects', projectId, 'columns', columnId),
+      data: columnData,
+    });
+
+    for (const card of cardsByColumn[columnId] ?? []) {
+      const { id: cardId, ...cardData } = card;
+      archiveOperations.push({
+        type: 'set',
+        ref: doc(db, 'deletedProjects', projectId, 'columns', columnId, 'cards', cardId),
+        data: cardData,
+      });
+    }
+  }
+  await commitBatchOperations(archiveOperations);
+
+  await permanentlyDeleteProjectData(projectId, 'projects');
+}
+
+export async function hardDeleteProject(projectId) {
+  const projectRef = doc(db, 'projects', projectId);
+  const projectSnap = await getDoc(projectRef);
+  if (!projectSnap.exists()) return;
+  await permanentlyDeleteProjectData(projectId, 'projects');
+}
+
+async function purgeDeletedProjectArchive(projectId, uid = null) {
+  const deletedProjectRef = doc(db, 'deletedProjects', projectId);
+  const deletedProjectSnap = await getDoc(deletedProjectRef);
+  if (!deletedProjectSnap.exists()) return;
+
+  const deletedProjectData = deletedProjectSnap.data();
+  if (uid && deletedProjectData.ownerId && deletedProjectData.ownerId !== uid) {
+    throw new Error('OWNER_ONLY');
+  }
+
+  await permanentlyDeleteProjectData(projectId, 'deletedProjects');
+}
+
+export async function getDeletedProjects(uid) {
+  if (!uid) return [];
+
+  const deletedQuery = query(
+    collection(db, 'deletedProjects'),
+    where('ownerId', '==', uid)
+  );
+  const snap = await getDocs(deletedQuery);
+  const allProjects = snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+  const now = Date.now();
+  const activeProjects = [];
+  const expiredIds = [];
+
+  for (const project of allProjects) {
+    const restoreUntilMs = getRestoreUntilMs(project);
+    if (restoreUntilMs && restoreUntilMs < now) {
+      expiredIds.push(project.id);
+      continue;
+    }
+    activeProjects.push(project);
+  }
+
+  if (expiredIds.length) {
+    await Promise.allSettled(expiredIds.map((projectId) => purgeDeletedProjectArchive(projectId, uid)));
+  }
+
+  return activeProjects.sort((a, b) => toMillis(b.deletedAt) - toMillis(a.deletedAt));
+}
+
+export async function restoreDeletedProject(projectId, uid = null) {
+  if (!projectId) return null;
+
+  const deletedProjectRef = doc(db, 'deletedProjects', projectId);
+  const deletedProjectSnap = await getDoc(deletedProjectRef);
+  if (!deletedProjectSnap.exists()) return null;
+
+  const deletedProjectData = deletedProjectSnap.data();
+  if (uid && deletedProjectData.ownerId && deletedProjectData.ownerId !== uid) {
+    throw new Error('OWNER_ONLY');
+  }
+  const restoreUntilMs = getRestoreUntilMs(deletedProjectData);
+  if (restoreUntilMs && restoreUntilMs < Date.now()) {
+    await purgeDeletedProjectArchive(projectId, uid).catch(() => {});
+    throw new Error('RESTORE_EXPIRED');
+  }
+
+  const restoredProjectId = deletedProjectData.originalProjectId ?? projectId;
+  const restoredProjectRef = doc(db, 'projects', restoredProjectId);
+  const existingProjectSnap = await getDoc(restoredProjectRef);
+  if (existingProjectSnap.exists()) {
+    throw new Error('PROJECT_ALREADY_EXISTS');
+  }
+
+  const { columns, cardsByColumn } = await getArchivedProjectContent('deletedProjects', projectId);
+
+  await setDoc(restoredProjectRef, {
+    ...stripDeletedProjectMetadata(deletedProjectData),
+    restoredAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
+  const restoreOperations = [];
+  for (const column of columns) {
+    const { id: columnId, ...columnData } = column;
+    restoreOperations.push({
+      type: 'set',
+      ref: doc(db, 'projects', restoredProjectId, 'columns', columnId),
+      data: columnData,
+    });
+
+    for (const card of cardsByColumn[columnId] ?? []) {
+      const { id: cardId, ...cardData } = card;
+      restoreOperations.push({
+        type: 'set',
+        ref: doc(db, 'projects', restoredProjectId, 'columns', columnId, 'cards', cardId),
+        data: cardData,
+      });
+    }
+  }
+  await commitBatchOperations(restoreOperations);
+
+  await purgeDeletedProjectArchive(projectId, uid);
+
+  return restoredProjectId;
 }
 
 export function listenProjects(uid, callback) {

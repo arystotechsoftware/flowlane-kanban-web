@@ -796,6 +796,53 @@
   </div>
 
   <!-- ── UPGRADE MODAL ── -->
+  <div id="delete-project-modal" class="modal-overlay hidden" data-modal="delete-project">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title">Delete Project</h2>
+        <button class="modal-close-btn" data-close="delete-project" type="button" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="delete-project-copy" class="delete-project-copy">Choose how you want to delete this project.</p>
+        <div class="delete-project-choice-list">
+          <button id="soft-delete-project-confirm-btn" class="delete-project-choice" type="button">
+            <span class="delete-project-choice__title">Soft Delete</span>
+            <span class="delete-project-choice__body">Move the project to Deleted Projects for 60 days. Restore will bring back cards and collaborators.</span>
+          </button>
+          <button id="open-hard-delete-project-btn" class="delete-project-choice delete-project-choice--danger" type="button">
+            <span class="delete-project-choice__title">Hard Delete</span>
+            <span class="delete-project-choice__body">Permanently delete the project right away. This cannot be undone.</span>
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="delete-project" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="hard-delete-project-modal" class="modal-overlay hidden" data-modal="hard-delete-project">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title">Hard Delete Project</h2>
+        <button class="modal-close-btn" data-close="hard-delete-project" type="button" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="hard-delete-project-copy" class="delete-project-copy delete-project-copy--danger">Are you sure? This will delete the project and will not be recoverable.</p>
+        <label class="form-label" for="hard-delete-project-input">Type DELETE to confirm</label>
+        <input id="hard-delete-project-input" class="form-input delete-project-confirm-input" type="text" placeholder="DELETE" autocomplete="off" />
+      </div>
+      <div class="modal-footer">
+        <button id="cancel-hard-delete-project-btn" class="btn-ghost" type="button">No</button>
+        <button id="confirm-hard-delete-project-btn" class="btn-danger-sm" type="button" disabled>Yes</button>
+      </div>
+    </div>
+  </div>
+
   <div id="upgrade-modal" class="modal-overlay hidden" data-modal="upgrade">
     <div class="modal modal-sm">
       <div class="modal-header">
@@ -972,7 +1019,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle">
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
           </svg>
-          All Projects
+          Project Manager
         </h2>
         <button class="modal-close" data-close="project-browser" type="button" aria-label="Close">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -981,9 +1028,14 @@
         </button>
       </div>
       <div class="modal-body" style="padding-top:0">
+        <div class="project-browser-tabs" role="tablist" aria-label="Project manager views">
+          <button id="project-browser-tab-current" class="project-browser-tab active" type="button">Current Projects</button>
+          <button id="project-browser-tab-deleted" class="project-browser-tab" type="button">Deleted Projects</button>
+        </div>
         <div class="project-browser-search">
           <input type="text" id="project-browser-search-input" placeholder="Search projects..." autocomplete="off" />
         </div>
+        <p id="project-browser-help" class="project-browser-help">All current projects, including completed, cancelled, and deferred boards.</p>
         <div id="project-browser-list" class="project-browser-list"></div>
       </div>
       <div class="modal-footer">
