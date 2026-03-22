@@ -2839,6 +2839,130 @@ textarea.form-input {
   margin-top: 6px;
 }
 
+.invite-modal-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.invite-modal-tab {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: var(--trans);
+}
+
+.invite-modal-tab:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.invite-modal-tab.active {
+  background: var(--accent-muted);
+  border-color: var(--accent);
+  color: #c7d2fe;
+}
+
+.invite-panel.hidden {
+  display: none;
+}
+
+.invite-contact-options,
+.invite-contacts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.invite-contact-option,
+.invite-contact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-base);
+}
+
+.invite-contact-option {
+  width: 100%;
+  cursor: pointer;
+  transition: var(--trans);
+  text-align: left;
+}
+
+.invite-contact-option:hover,
+.invite-contact-option.is-selected {
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.12);
+}
+
+.invite-contact-details {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.invite-contact-name {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.invite-contact-email {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.invite-contact-selected {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.invite-contact-hint,
+.invite-contact-empty {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.invite-contact-empty {
+  padding: 14px 12px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.invite-contacts-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.invite-contacts-list-group {
+  margin-bottom: 0;
+}
+
+.invite-contact-row .btn-ghost {
+  flex-shrink: 0;
+}
+
 .collaborator-row {
   display: flex;
   align-items: center;
