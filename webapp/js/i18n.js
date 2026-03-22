@@ -1,0 +1,1002 @@
+/**
+ * i18n.js – Internationalization module
+ *
+ * Supports: English (en), French (fr), Japanese (ja),
+ *           Korean (ko), Portuguese (pt), Spanish (es)
+ *
+ * Usage:
+ *   import { t, setLanguage, applyTranslations, SUPPORTED_LANGUAGES } from './i18n.js';
+ *
+ *   t('btn_save')            → translated string
+ *   setLanguage('fr')        → change language + persist
+ *   applyTranslations()      → walk DOM and apply data-i18n* attributes
+ */
+
+export const SUPPORTED_LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'fr', label: 'Français' },
+  { code: 'ja', label: '日本語' },
+  { code: 'ko', label: '한국어' },
+  { code: 'pt', label: 'Português' },
+  { code: 'es', label: 'Español' },
+];
+
+let _lang = 'en';
+
+// ── Translation table ─────────────────────────────────────────────────────
+
+const T = {
+  en: {
+    // Auth screen
+    auth_headline:    'Your Kanban, your way',
+    auth_subtitle:    'Organize tasks with FlowLane — free, private, fast.',
+    auth_signin:      'Continue with Google',
+    auth_skip:        'Use without account',
+    auth_skip_note:   'Data stored locally · no sync',
+    auth_feat1:       'Visual Kanban & swimlane boards',
+    auth_feat2:       'Card keys, priorities & due dates',
+    auth_feat3:       'Premium: cloud sync & collaboration',
+
+    // Header tooltips
+    tip_search:       'Search cards',
+    tip_analytics:    'Analytics dashboard',
+    tip_open_window:  'Open as standalone window',
+    tip_swimlane:     'Toggle swimlane view',
+    tip_add_column:   'Add column',
+    tip_invite:       'Invite collaborator',
+
+    // Project dropdown
+    projects_header:  'Projects',
+    btn_new_project:  'New Project',
+
+    // Board
+    loading:              'Loading…',
+    no_columns_title:     'No columns yet',
+    no_columns_body:      'Click "Add column" to create your first Kanban column.',
+    add_column_inline:    'Add column',
+    add_card_btn:         '+ Add card',
+    card_title_ph:        'Card title…',
+    btn_add_card:         'Add Card',
+
+    // Common actions
+    btn_save:       'Save',
+    btn_cancel:     'Cancel',
+    btn_delete:     'Delete',
+    btn_done:       'Done',
+    btn_close:      'Close',
+    btn_rename:     'Rename',
+    btn_edit:       'Edit',
+
+    // User menu
+    btn_upgrade:        'Upgrade to Premium',
+    btn_manage_billing: 'Manage Billing',
+    btn_settings:       'Settings',
+    btn_sign_out:       'Sign Out',
+    btn_sign_in:        'Sign In',
+
+    // Tier badge
+    tier_free:    'Free',
+    tier_premium: 'Premium',
+
+    // Analytics
+    analytics_title:    'Analytics',
+    stat_total:         'Total Cards',
+    stat_completed:     'Completed',
+    stat_overdue:       'Overdue',
+    stat_rate:          'Completion Rate',
+    chart_status:       'Status Distribution',
+    chart_priority:     'Priority Breakdown',
+    chart_columns:      'Cards per Column',
+    chart_activity:     'Cards Created — Last 14 Days',
+    analytics_empty:    'No cards yet in this project.',
+
+    // Settings modal
+    settings_title:         'Settings',
+    settings_org_label:     'Organization / Business Name',
+    settings_org_hint:      'Optional · shown in the app header',
+    settings_org_ph:        'e.g. Acme Corp',
+    settings_theme_label:   'Theme',
+    settings_theme_dark:    'Dark',
+    settings_theme_light:   'Light',
+    settings_lang_label:    'Language',
+    settings_export_label:  'Export / Import Data',
+    btn_export_json:        'Export JSON',
+    btn_import_json:        'Import JSON',
+    settings_danger_label:  'Danger Zone',
+    btn_delete_project:     'Delete This Project',
+
+    // Project modal
+    project_new_title:   'New Project',
+    project_edit_title:  'Edit Project',
+    label_proj_name:     'Project Name',
+    ph_proj_name:        'e.g. My Kanban Board',
+    label_proj_code:     'Project Code',
+    label_proj_desc:     'Description',
+    ph_proj_desc:        'Optional description…',
+    label_proj_color:    'Color',
+    btn_create_project:  'Create Project',
+    btn_save_changes:    'Save Changes',
+
+    // Column modal
+    col_modal_title:    'Add Column',
+    label_col_name:     'Column Name',
+    ph_col_name:        'e.g. In Review',
+    label_col_color:    'Color',
+    btn_add_column:     'Add Column',
+
+    // Card modal
+    label_col_select:    'Column',
+    label_status:        'Status',
+    label_priority:      'Priority',
+    label_due:           'Target Date',
+    label_created:       'Created',
+    label_completed_on:  'Completed',
+    label_description:   'Description',
+    label_labels:        'Labels',
+    ph_label_name:       'Label name…',
+    btn_add_label:       'Add',
+    label_checklist:     'Checklist',
+    ph_checklist_item:   'Add item…',
+    btn_add_item:        'Add',
+    label_attachments:   'Attachments',
+    label_cover:         'Cover',
+    label_assignee:      'Assignee',
+    unassigned:          'Unassigned',
+    label_comments:      'Comments',
+    ph_comment:          'Write a comment…',
+    btn_comment:         'Comment',
+    label_activity:      'Activity',
+    btn_delete_card:     'Delete Card',
+    btn_upload_image:    'Upload Image',
+    btn_remove_cover:    'Remove Cover',
+
+    // Status options
+    status_new:          'New',
+    status_approved:     'Approved',
+    status_fixed:        'Fixed',
+    status_for_followup: 'For Followup',
+    status_completed:    'Completed',
+    status_cancelled:    'Cancelled',
+
+    // Priority options
+    priority_none:   'None',
+    priority_low:    'Low',
+    priority_medium: 'Medium',
+    priority_high:   'High',
+
+    // Column menu
+    col_menu_rename: 'Rename Column',
+    col_menu_color:  'Change Color',
+    col_menu_delete: 'Delete Column',
+
+    // Invite modal
+    invite_title:       'Invite Collaborator',
+    label_invite_email: 'Email address',
+    ph_invite_email:    'colleague@example.com',
+    label_invite_role:  'Permission',
+    role_editor:        'Editor',
+    role_viewer:        'Viewer',
+    role_admin:         'Admin',
+    current_members:    'Current Collaborators',
+    btn_send_invite:    'Send Invite',
+
+    // Upgrade modal
+    upgrade_title:      'Upgrade to Premium',
+    upgrade_monthly:    'Monthly',
+    upgrade_annual:     'Annual',
+    upgrade_save:       'Save 17%',
+    upgrade_signin_note:'Sign in with Google to upgrade.',
+    btn_upgrade_now:    'Upgrade Now',
+
+    // Downgrade modal
+    downgrade_title:     'Subscription Ended',
+    downgrade_body:      'Your premium subscription has ended. Export your data or renew to keep Firestore sync.',
+    btn_renew:           'Renew Premium',
+    btn_continue_free:   'Continue with Free Plan',
+  },
+
+  // ── French ──────────────────────────────────────────────────────────────
+  fr: {
+    auth_headline:    'Votre Kanban, à votre façon',
+    auth_subtitle:    'Organisez vos tâches avec FlowLane — gratuit, privé, rapide.',
+    auth_signin:      'Continuer avec Google',
+    auth_skip:        'Utiliser sans compte',
+    auth_skip_note:   'Données locales · pas de synchronisation',
+    auth_feat1:       'Tableaux Kanban et swimlane visuels',
+    auth_feat2:       'Clés de carte, priorités et échéances',
+    auth_feat3:       'Premium : sync cloud et collaboration',
+
+    tip_search:       'Rechercher des cartes',
+    tip_analytics:    'Tableau de bord analytique',
+    tip_open_window:  'Ouvrir dans une fenêtre',
+    tip_swimlane:     'Basculer la vue swimlane',
+    tip_add_column:   'Ajouter une colonne',
+    tip_invite:       'Inviter un collaborateur',
+
+    projects_header:  'Projets',
+    btn_new_project:  'Nouveau projet',
+
+    loading:              'Chargement…',
+    no_columns_title:     'Aucune colonne',
+    no_columns_body:      'Cliquez sur « Ajouter une colonne » pour créer votre première colonne.',
+    add_column_inline:    'Ajouter une colonne',
+    add_card_btn:         '+ Ajouter une carte',
+    card_title_ph:        'Titre de la carte…',
+    btn_add_card:         'Ajouter',
+
+    btn_save:       'Enregistrer',
+    btn_cancel:     'Annuler',
+    btn_delete:     'Supprimer',
+    btn_done:       'Terminer',
+    btn_close:      'Fermer',
+    btn_rename:     'Renommer',
+    btn_edit:       'Modifier',
+
+    btn_upgrade:        'Passer à Premium',
+    btn_manage_billing: 'Gérer la facturation',
+    btn_settings:       'Paramètres',
+    btn_sign_out:       'Se déconnecter',
+    btn_sign_in:        'Se connecter',
+
+    tier_free:    'Gratuit',
+    tier_premium: 'Premium',
+
+    analytics_title:    'Analytique',
+    stat_total:         'Cartes totales',
+    stat_completed:     'Terminées',
+    stat_overdue:       'En retard',
+    stat_rate:          'Taux d\'achèvement',
+    chart_status:       'Répartition par statut',
+    chart_priority:     'Répartition par priorité',
+    chart_columns:      'Cartes par colonne',
+    chart_activity:     'Cartes créées — 14 derniers jours',
+    analytics_empty:    'Aucune carte dans ce projet.',
+
+    settings_title:         'Paramètres',
+    settings_org_label:     'Organisation / Entreprise',
+    settings_org_hint:      'Facultatif · affiché dans l\'en-tête',
+    settings_org_ph:        'ex. Acme Corp',
+    settings_theme_label:   'Thème',
+    settings_theme_dark:    'Sombre',
+    settings_theme_light:   'Clair',
+    settings_lang_label:    'Langue',
+    settings_export_label:  'Exporter / Importer les données',
+    btn_export_json:        'Exporter JSON',
+    btn_import_json:        'Importer JSON',
+    settings_danger_label:  'Zone dangereuse',
+    btn_delete_project:     'Supprimer ce projet',
+
+    project_new_title:   'Nouveau projet',
+    project_edit_title:  'Modifier le projet',
+    label_proj_name:     'Nom du projet',
+    ph_proj_name:        'ex. Mon tableau Kanban',
+    label_proj_code:     'Code du projet',
+    label_proj_desc:     'Description',
+    ph_proj_desc:        'Description facultative…',
+    label_proj_color:    'Couleur',
+    btn_create_project:  'Créer le projet',
+    btn_save_changes:    'Enregistrer',
+
+    col_modal_title:    'Ajouter une colonne',
+    label_col_name:     'Nom de la colonne',
+    ph_col_name:        'ex. En révision',
+    label_col_color:    'Couleur',
+    btn_add_column:     'Ajouter la colonne',
+
+    label_col_select:    'Colonne',
+    label_status:        'Statut',
+    label_priority:      'Priorité',
+    label_due:           'Date cible',
+    label_created:       'Créé',
+    label_completed_on:  'Terminé',
+    label_description:   'Description',
+    label_labels:        'Étiquettes',
+    ph_label_name:       'Nom de l\'étiquette…',
+    btn_add_label:       'Ajouter',
+    label_checklist:     'Liste de contrôle',
+    ph_checklist_item:   'Ajouter un élément…',
+    btn_add_item:        'Ajouter',
+    label_attachments:   'Pièces jointes',
+    label_cover:         'Couverture',
+    label_assignee:      'Assigné',
+    unassigned:          'Non assigné',
+    label_comments:      'Commentaires',
+    ph_comment:          'Écrire un commentaire…',
+    btn_comment:         'Commenter',
+    label_activity:      'Activité',
+    btn_delete_card:     'Supprimer la carte',
+    btn_upload_image:    'Télécharger une image',
+    btn_remove_cover:    'Retirer la couverture',
+
+    status_new:          'Nouveau',
+    status_approved:     'Approuvé',
+    status_fixed:        'Résolu',
+    status_for_followup: 'À suivre',
+    status_completed:    'Terminé',
+    status_cancelled:    'Annulé',
+
+    priority_none:   'Aucune',
+    priority_low:    'Basse',
+    priority_medium: 'Moyenne',
+    priority_high:   'Haute',
+
+    col_menu_rename: 'Renommer la colonne',
+    col_menu_color:  'Changer la couleur',
+    col_menu_delete: 'Supprimer la colonne',
+
+    invite_title:       'Inviter un collaborateur',
+    label_invite_email: 'Adresse e-mail',
+    ph_invite_email:    'collegue@exemple.com',
+    label_invite_role:  'Permission',
+    role_editor:        'Éditeur',
+    role_viewer:        'Lecteur',
+    role_admin:         'Administrateur',
+    current_members:    'Collaborateurs actuels',
+    btn_send_invite:    'Envoyer l\'invitation',
+
+    upgrade_title:      'Passer à Premium',
+    upgrade_monthly:    'Mensuel',
+    upgrade_annual:     'Annuel',
+    upgrade_save:       'Économisez 17 %',
+    upgrade_signin_note:'Connectez-vous avec Google pour mettre à niveau.',
+    btn_upgrade_now:    'Mettre à niveau',
+
+    downgrade_title:     'Abonnement terminé',
+    downgrade_body:      'Votre abonnement premium a pris fin. Exportez vos données ou renouvelez pour conserver la synchronisation.',
+    btn_renew:           'Renouveler Premium',
+    btn_continue_free:   'Continuer avec le plan gratuit',
+  },
+
+  // ── Japanese ─────────────────────────────────────────────────────────────
+  ja: {
+    auth_headline:    'あなたのカンバン、あなたのやり方',
+    auth_subtitle:    'FlowLaneでタスクを整理 — 無料、プライベート、高速。',
+    auth_signin:      'Googleで続行',
+    auth_skip:        'アカウントなしで使用',
+    auth_skip_note:   'データはローカル保存・同期なし',
+    auth_feat1:       'ビジュアルカンバン＆スイムレーンボード',
+    auth_feat2:       'カードキー、優先度、期限',
+    auth_feat3:       'プレミアム：クラウド同期＆コラボレーション',
+
+    tip_search:       'カードを検索',
+    tip_analytics:    'アナリティクス',
+    tip_open_window:  'ウィンドウで開く',
+    tip_swimlane:     'スイムレーン表示切替',
+    tip_add_column:   'カラムを追加',
+    tip_invite:       'コラボレーターを招待',
+
+    projects_header:  'プロジェクト',
+    btn_new_project:  '新規プロジェクト',
+
+    loading:              '読み込み中…',
+    no_columns_title:     'カラムがありません',
+    no_columns_body:      '「カラムを追加」をクリックして最初のカンバンカラムを作成してください。',
+    add_column_inline:    'カラムを追加',
+    add_card_btn:         '＋ カードを追加',
+    card_title_ph:        'カードタイトル…',
+    btn_add_card:         '追加',
+
+    btn_save:       '保存',
+    btn_cancel:     'キャンセル',
+    btn_delete:     '削除',
+    btn_done:       '完了',
+    btn_close:      '閉じる',
+    btn_rename:     '名前変更',
+    btn_edit:       '編集',
+
+    btn_upgrade:        'プレミアムにアップグレード',
+    btn_manage_billing: '請求管理',
+    btn_settings:       '設定',
+    btn_sign_out:       'サインアウト',
+    btn_sign_in:        'サインイン',
+
+    tier_free:    '無料',
+    tier_premium: 'プレミアム',
+
+    analytics_title:    'アナリティクス',
+    stat_total:         '総カード数',
+    stat_completed:     '完了',
+    stat_overdue:       '期限超過',
+    stat_rate:          '完了率',
+    chart_status:       'ステータス分布',
+    chart_priority:     '優先度内訳',
+    chart_columns:      'カラム別カード数',
+    chart_activity:     'カード作成数 — 過去14日間',
+    analytics_empty:    'このプロジェクトにカードがありません。',
+
+    settings_title:         '設定',
+    settings_org_label:     '組織 / 会社名',
+    settings_org_hint:      '任意 · アプリヘッダーに表示',
+    settings_org_ph:        '例：Acme Corp',
+    settings_theme_label:   'テーマ',
+    settings_theme_dark:    'ダーク',
+    settings_theme_light:   'ライト',
+    settings_lang_label:    '言語',
+    settings_export_label:  'データのエクスポート / インポート',
+    btn_export_json:        'JSONエクスポート',
+    btn_import_json:        'JSONインポート',
+    settings_danger_label:  '危険ゾーン',
+    btn_delete_project:     'このプロジェクトを削除',
+
+    project_new_title:   '新規プロジェクト',
+    project_edit_title:  'プロジェクトを編集',
+    label_proj_name:     'プロジェクト名',
+    ph_proj_name:        '例：マイカンバンボード',
+    label_proj_code:     'プロジェクトコード',
+    label_proj_desc:     '説明',
+    ph_proj_desc:        '任意の説明…',
+    label_proj_color:    'カラー',
+    btn_create_project:  'プロジェクトを作成',
+    btn_save_changes:    '変更を保存',
+
+    col_modal_title:    'カラムを追加',
+    label_col_name:     'カラム名',
+    ph_col_name:        '例：レビュー中',
+    label_col_color:    'カラー',
+    btn_add_column:     'カラムを追加',
+
+    label_col_select:    'カラム',
+    label_status:        'ステータス',
+    label_priority:      '優先度',
+    label_due:           '目標日',
+    label_created:       '作成日',
+    label_completed_on:  '完了日',
+    label_description:   '説明',
+    label_labels:        'ラベル',
+    ph_label_name:       'ラベル名…',
+    btn_add_label:       '追加',
+    label_checklist:     'チェックリスト',
+    ph_checklist_item:   'アイテムを追加…',
+    btn_add_item:        '追加',
+    label_attachments:   '添付ファイル',
+    label_cover:         'カバー',
+    label_assignee:      '担当者',
+    unassigned:          '未割り当て',
+    label_comments:      'コメント',
+    ph_comment:          'コメントを入力…',
+    btn_comment:         'コメント',
+    label_activity:      'アクティビティ',
+    btn_delete_card:     'カードを削除',
+    btn_upload_image:    '画像をアップロード',
+    btn_remove_cover:    'カバーを削除',
+
+    status_new:          '新規',
+    status_approved:     '承認済み',
+    status_fixed:        '修正済み',
+    status_for_followup: 'フォローアップ',
+    status_completed:    '完了',
+    status_cancelled:    'キャンセル',
+
+    priority_none:   'なし',
+    priority_low:    '低',
+    priority_medium: '中',
+    priority_high:   '高',
+
+    col_menu_rename: 'カラム名変更',
+    col_menu_color:  'カラー変更',
+    col_menu_delete: 'カラムを削除',
+
+    invite_title:       'コラボレーターを招待',
+    label_invite_email: 'メールアドレス',
+    ph_invite_email:    'colleague@example.com',
+    label_invite_role:  '権限',
+    role_editor:        '編集者',
+    role_viewer:        '閲覧者',
+    role_admin:         '管理者',
+    current_members:    '現在のコラボレーター',
+    btn_send_invite:    '招待を送信',
+
+    upgrade_title:      'プレミアムにアップグレード',
+    upgrade_monthly:    '月額',
+    upgrade_annual:     '年額',
+    upgrade_save:       '17%お得',
+    upgrade_signin_note:'アップグレードするにはGoogleでサインインしてください。',
+    btn_upgrade_now:    '今すぐアップグレード',
+
+    downgrade_title:     'サブスクリプション終了',
+    downgrade_body:      'プレミアムサブスクリプションが終了しました。データをエクスポートするか、更新して同期を維持してください。',
+    btn_renew:           'プレミアムを更新',
+    btn_continue_free:   '無料プランを続ける',
+  },
+
+  // ── Korean ───────────────────────────────────────────────────────────────
+  ko: {
+    auth_headline:    '나만의 칸반, 나만의 방식',
+    auth_subtitle:    'FlowLane으로 작업을 정리하세요 — 무료, 개인, 빠름.',
+    auth_signin:      'Google로 계속하기',
+    auth_skip:        '계정 없이 사용',
+    auth_skip_note:   '데이터 로컬 저장 · 동기화 없음',
+    auth_feat1:       '시각적 칸반 & 스윔레인 보드',
+    auth_feat2:       '카드 키, 우선순위 및 마감일',
+    auth_feat3:       '프리미엄: 클라우드 동기화 & 협업',
+
+    tip_search:       '카드 검색',
+    tip_analytics:    '분석 대시보드',
+    tip_open_window:  '독립 창으로 열기',
+    tip_swimlane:     '스윔레인 보기 전환',
+    tip_add_column:   '컬럼 추가',
+    tip_invite:       '협업자 초대',
+
+    projects_header:  '프로젝트',
+    btn_new_project:  '새 프로젝트',
+
+    loading:              '로딩 중…',
+    no_columns_title:     '컬럼이 없습니다',
+    no_columns_body:      '"컬럼 추가"를 클릭하여 첫 번째 칸반 컬럼을 만드세요.',
+    add_column_inline:    '컬럼 추가',
+    add_card_btn:         '+ 카드 추가',
+    card_title_ph:        '카드 제목…',
+    btn_add_card:         '추가',
+
+    btn_save:       '저장',
+    btn_cancel:     '취소',
+    btn_delete:     '삭제',
+    btn_done:       '완료',
+    btn_close:      '닫기',
+    btn_rename:     '이름 변경',
+    btn_edit:       '편집',
+
+    btn_upgrade:        '프리미엄으로 업그레이드',
+    btn_manage_billing: '결제 관리',
+    btn_settings:       '설정',
+    btn_sign_out:       '로그아웃',
+    btn_sign_in:        '로그인',
+
+    tier_free:    '무료',
+    tier_premium: '프리미엄',
+
+    analytics_title:    '분석',
+    stat_total:         '전체 카드',
+    stat_completed:     '완료',
+    stat_overdue:       '기한 초과',
+    stat_rate:          '완료율',
+    chart_status:       '상태 분포',
+    chart_priority:     '우선순위 분류',
+    chart_columns:      '컬럼별 카드',
+    chart_activity:     '카드 생성 — 최근 14일',
+    analytics_empty:    '이 프로젝트에 카드가 없습니다.',
+
+    settings_title:         '설정',
+    settings_org_label:     '조직 / 회사명',
+    settings_org_hint:      '선택 사항 · 앱 헤더에 표시됨',
+    settings_org_ph:        '예: Acme Corp',
+    settings_theme_label:   '테마',
+    settings_theme_dark:    '다크',
+    settings_theme_light:   '라이트',
+    settings_lang_label:    '언어',
+    settings_export_label:  '데이터 내보내기 / 가져오기',
+    btn_export_json:        'JSON 내보내기',
+    btn_import_json:        'JSON 가져오기',
+    settings_danger_label:  '위험 구역',
+    btn_delete_project:     '이 프로젝트 삭제',
+
+    project_new_title:   '새 프로젝트',
+    project_edit_title:  '프로젝트 편집',
+    label_proj_name:     '프로젝트 이름',
+    ph_proj_name:        '예: 내 칸반 보드',
+    label_proj_code:     '프로젝트 코드',
+    label_proj_desc:     '설명',
+    ph_proj_desc:        '선택적 설명…',
+    label_proj_color:    '색상',
+    btn_create_project:  '프로젝트 만들기',
+    btn_save_changes:    '변경 사항 저장',
+
+    col_modal_title:    '컬럼 추가',
+    label_col_name:     '컬럼 이름',
+    ph_col_name:        '예: 검토 중',
+    label_col_color:    '색상',
+    btn_add_column:     '컬럼 추가',
+
+    label_col_select:    '컬럼',
+    label_status:        '상태',
+    label_priority:      '우선순위',
+    label_due:           '목표일',
+    label_created:       '생성일',
+    label_completed_on:  '완료일',
+    label_description:   '설명',
+    label_labels:        '레이블',
+    ph_label_name:       '레이블 이름…',
+    btn_add_label:       '추가',
+    label_checklist:     '체크리스트',
+    ph_checklist_item:   '항목 추가…',
+    btn_add_item:        '추가',
+    label_attachments:   '첨부 파일',
+    label_cover:         '커버',
+    label_assignee:      '담당자',
+    unassigned:          '미지정',
+    label_comments:      '댓글',
+    ph_comment:          '댓글 작성…',
+    btn_comment:         '댓글',
+    label_activity:      '활동',
+    btn_delete_card:     '카드 삭제',
+    btn_upload_image:    '이미지 업로드',
+    btn_remove_cover:    '커버 제거',
+
+    status_new:          '신규',
+    status_approved:     '승인됨',
+    status_fixed:        '수정됨',
+    status_for_followup: '팔로우업',
+    status_completed:    '완료',
+    status_cancelled:    '취소됨',
+
+    priority_none:   '없음',
+    priority_low:    '낮음',
+    priority_medium: '중간',
+    priority_high:   '높음',
+
+    col_menu_rename: '컬럼 이름 변경',
+    col_menu_color:  '색상 변경',
+    col_menu_delete: '컬럼 삭제',
+
+    invite_title:       '협업자 초대',
+    label_invite_email: '이메일 주소',
+    ph_invite_email:    'colleague@example.com',
+    label_invite_role:  '권한',
+    role_editor:        '편집자',
+    role_viewer:        '뷰어',
+    role_admin:         '관리자',
+    current_members:    '현재 협업자',
+    btn_send_invite:    '초대 보내기',
+
+    upgrade_title:      '프리미엄으로 업그레이드',
+    upgrade_monthly:    '월간',
+    upgrade_annual:     '연간',
+    upgrade_save:       '17% 절약',
+    upgrade_signin_note:'업그레이드하려면 Google로 로그인하세요.',
+    btn_upgrade_now:    '지금 업그레이드',
+
+    downgrade_title:     '구독 종료',
+    downgrade_body:      '프리미엄 구독이 종료되었습니다. 데이터를 내보내거나 갱신하여 동기화를 유지하세요.',
+    btn_renew:           '프리미엄 갱신',
+    btn_continue_free:   '무료 플랜 계속',
+  },
+
+  // ── Portuguese ───────────────────────────────────────────────────────────
+  pt: {
+    auth_headline:    'Seu Kanban, do seu jeito',
+    auth_subtitle:    'Organize tarefas com FlowLane — grátis, privado, rápido.',
+    auth_signin:      'Continuar com o Google',
+    auth_skip:        'Usar sem conta',
+    auth_skip_note:   'Dados armazenados localmente · sem sincronização',
+    auth_feat1:       'Quadros Kanban e swimlane visuais',
+    auth_feat2:       'Chaves de cartão, prioridades e datas',
+    auth_feat3:       'Premium: sincronização na nuvem e colaboração',
+
+    tip_search:       'Pesquisar cartões',
+    tip_analytics:    'Painel de análises',
+    tip_open_window:  'Abrir em janela separada',
+    tip_swimlane:     'Alternar visualização swimlane',
+    tip_add_column:   'Adicionar coluna',
+    tip_invite:       'Convidar colaborador',
+
+    projects_header:  'Projetos',
+    btn_new_project:  'Novo Projeto',
+
+    loading:              'Carregando…',
+    no_columns_title:     'Nenhuma coluna ainda',
+    no_columns_body:      'Clique em "Adicionar coluna" para criar sua primeira coluna Kanban.',
+    add_column_inline:    'Adicionar coluna',
+    add_card_btn:         '+ Adicionar cartão',
+    card_title_ph:        'Título do cartão…',
+    btn_add_card:         'Adicionar',
+
+    btn_save:       'Salvar',
+    btn_cancel:     'Cancelar',
+    btn_delete:     'Excluir',
+    btn_done:       'Concluído',
+    btn_close:      'Fechar',
+    btn_rename:     'Renomear',
+    btn_edit:       'Editar',
+
+    btn_upgrade:        'Atualizar para Premium',
+    btn_manage_billing: 'Gerenciar Cobrança',
+    btn_settings:       'Configurações',
+    btn_sign_out:       'Sair',
+    btn_sign_in:        'Entrar',
+
+    tier_free:    'Gratuito',
+    tier_premium: 'Premium',
+
+    analytics_title:    'Análises',
+    stat_total:         'Total de Cartões',
+    stat_completed:     'Concluídos',
+    stat_overdue:       'Em Atraso',
+    stat_rate:          'Taxa de Conclusão',
+    chart_status:       'Distribuição por Status',
+    chart_priority:     'Detalhamento por Prioridade',
+    chart_columns:      'Cartões por Coluna',
+    chart_activity:     'Cartões Criados — Últimos 14 Dias',
+    analytics_empty:    'Nenhum cartão neste projeto ainda.',
+
+    settings_title:         'Configurações',
+    settings_org_label:     'Organização / Nome da Empresa',
+    settings_org_hint:      'Opcional · exibido no cabeçalho do app',
+    settings_org_ph:        'ex. Acme Corp',
+    settings_theme_label:   'Tema',
+    settings_theme_dark:    'Escuro',
+    settings_theme_light:   'Claro',
+    settings_lang_label:    'Idioma',
+    settings_export_label:  'Exportar / Importar Dados',
+    btn_export_json:        'Exportar JSON',
+    btn_import_json:        'Importar JSON',
+    settings_danger_label:  'Zona de Perigo',
+    btn_delete_project:     'Excluir Este Projeto',
+
+    project_new_title:   'Novo Projeto',
+    project_edit_title:  'Editar Projeto',
+    label_proj_name:     'Nome do Projeto',
+    ph_proj_name:        'ex. Meu Quadro Kanban',
+    label_proj_code:     'Código do Projeto',
+    label_proj_desc:     'Descrição',
+    ph_proj_desc:        'Descrição opcional…',
+    label_proj_color:    'Cor',
+    btn_create_project:  'Criar Projeto',
+    btn_save_changes:    'Salvar Alterações',
+
+    col_modal_title:    'Adicionar Coluna',
+    label_col_name:     'Nome da Coluna',
+    ph_col_name:        'ex. Em Revisão',
+    label_col_color:    'Cor',
+    btn_add_column:     'Adicionar Coluna',
+
+    label_col_select:    'Coluna',
+    label_status:        'Status',
+    label_priority:      'Prioridade',
+    label_due:           'Data Alvo',
+    label_created:       'Criado',
+    label_completed_on:  'Concluído',
+    label_description:   'Descrição',
+    label_labels:        'Etiquetas',
+    ph_label_name:       'Nome da etiqueta…',
+    btn_add_label:       'Adicionar',
+    label_checklist:     'Lista de Verificação',
+    ph_checklist_item:   'Adicionar item…',
+    btn_add_item:        'Adicionar',
+    label_attachments:   'Anexos',
+    label_cover:         'Capa',
+    label_assignee:      'Responsável',
+    unassigned:          'Não atribuído',
+    label_comments:      'Comentários',
+    ph_comment:          'Escrever um comentário…',
+    btn_comment:         'Comentar',
+    label_activity:      'Atividade',
+    btn_delete_card:     'Excluir Cartão',
+    btn_upload_image:    'Enviar Imagem',
+    btn_remove_cover:    'Remover Capa',
+
+    status_new:          'Novo',
+    status_approved:     'Aprovado',
+    status_fixed:        'Corrigido',
+    status_for_followup: 'A Acompanhar',
+    status_completed:    'Concluído',
+    status_cancelled:    'Cancelado',
+
+    priority_none:   'Nenhuma',
+    priority_low:    'Baixa',
+    priority_medium: 'Média',
+    priority_high:   'Alta',
+
+    col_menu_rename: 'Renomear Coluna',
+    col_menu_color:  'Alterar Cor',
+    col_menu_delete: 'Excluir Coluna',
+
+    invite_title:       'Convidar Colaborador',
+    label_invite_email: 'Endereço de e-mail',
+    ph_invite_email:    'colega@exemplo.com',
+    label_invite_role:  'Permissão',
+    role_editor:        'Editor',
+    role_viewer:        'Visualizador',
+    role_admin:         'Administrador',
+    current_members:    'Colaboradores Atuais',
+    btn_send_invite:    'Enviar Convite',
+
+    upgrade_title:      'Atualizar para Premium',
+    upgrade_monthly:    'Mensal',
+    upgrade_annual:     'Anual',
+    upgrade_save:       'Economize 17%',
+    upgrade_signin_note:'Entre com o Google para atualizar.',
+    btn_upgrade_now:    'Atualizar Agora',
+
+    downgrade_title:     'Assinatura Encerrada',
+    downgrade_body:      'Sua assinatura premium terminou. Exporte seus dados ou renove para manter a sincronização.',
+    btn_renew:           'Renovar Premium',
+    btn_continue_free:   'Continuar com Plano Gratuito',
+  },
+
+  // ── Spanish ──────────────────────────────────────────────────────────────
+  es: {
+    auth_headline:    'Tu Kanban, a tu manera',
+    auth_subtitle:    'Organiza tareas con FlowLane — gratis, privado, rápido.',
+    auth_signin:      'Continuar con Google',
+    auth_skip:        'Usar sin cuenta',
+    auth_skip_note:   'Datos almacenados localmente · sin sincronización',
+    auth_feat1:       'Tableros Kanban y swimlane visuales',
+    auth_feat2:       'Claves de tarjeta, prioridades y fechas límite',
+    auth_feat3:       'Premium: sincronización en la nube y colaboración',
+
+    tip_search:       'Buscar tarjetas',
+    tip_analytics:    'Panel de análisis',
+    tip_open_window:  'Abrir en ventana independiente',
+    tip_swimlane:     'Alternar vista swimlane',
+    tip_add_column:   'Añadir columna',
+    tip_invite:       'Invitar colaborador',
+
+    projects_header:  'Proyectos',
+    btn_new_project:  'Nuevo Proyecto',
+
+    loading:              'Cargando…',
+    no_columns_title:     'Sin columnas todavía',
+    no_columns_body:      'Haz clic en "Añadir columna" para crear tu primera columna Kanban.',
+    add_column_inline:    'Añadir columna',
+    add_card_btn:         '+ Añadir tarjeta',
+    card_title_ph:        'Título de la tarjeta…',
+    btn_add_card:         'Añadir',
+
+    btn_save:       'Guardar',
+    btn_cancel:     'Cancelar',
+    btn_delete:     'Eliminar',
+    btn_done:       'Listo',
+    btn_close:      'Cerrar',
+    btn_rename:     'Renombrar',
+    btn_edit:       'Editar',
+
+    btn_upgrade:        'Actualizar a Premium',
+    btn_manage_billing: 'Gestionar Facturación',
+    btn_settings:       'Configuración',
+    btn_sign_out:       'Cerrar sesión',
+    btn_sign_in:        'Iniciar sesión',
+
+    tier_free:    'Gratis',
+    tier_premium: 'Premium',
+
+    analytics_title:    'Análisis',
+    stat_total:         'Total de Tarjetas',
+    stat_completed:     'Completadas',
+    stat_overdue:       'Vencidas',
+    stat_rate:          'Tasa de Completación',
+    chart_status:       'Distribución por Estado',
+    chart_priority:     'Desglose por Prioridad',
+    chart_columns:      'Tarjetas por Columna',
+    chart_activity:     'Tarjetas Creadas — Últimos 14 Días',
+    analytics_empty:    'Aún no hay tarjetas en este proyecto.',
+
+    settings_title:         'Configuración',
+    settings_org_label:     'Organización / Empresa',
+    settings_org_hint:      'Opcional · se muestra en el encabezado',
+    settings_org_ph:        'ej. Acme Corp',
+    settings_theme_label:   'Tema',
+    settings_theme_dark:    'Oscuro',
+    settings_theme_light:   'Claro',
+    settings_lang_label:    'Idioma',
+    settings_export_label:  'Exportar / Importar Datos',
+    btn_export_json:        'Exportar JSON',
+    btn_import_json:        'Importar JSON',
+    settings_danger_label:  'Zona de Peligro',
+    btn_delete_project:     'Eliminar Este Proyecto',
+
+    project_new_title:   'Nuevo Proyecto',
+    project_edit_title:  'Editar Proyecto',
+    label_proj_name:     'Nombre del Proyecto',
+    ph_proj_name:        'ej. Mi Tablero Kanban',
+    label_proj_code:     'Código del Proyecto',
+    label_proj_desc:     'Descripción',
+    ph_proj_desc:        'Descripción opcional…',
+    label_proj_color:    'Color',
+    btn_create_project:  'Crear Proyecto',
+    btn_save_changes:    'Guardar Cambios',
+
+    col_modal_title:    'Añadir Columna',
+    label_col_name:     'Nombre de la Columna',
+    ph_col_name:        'ej. En Revisión',
+    label_col_color:    'Color',
+    btn_add_column:     'Añadir Columna',
+
+    label_col_select:    'Columna',
+    label_status:        'Estado',
+    label_priority:      'Prioridad',
+    label_due:           'Fecha Objetivo',
+    label_created:       'Creado',
+    label_completed_on:  'Completado',
+    label_description:   'Descripción',
+    label_labels:        'Etiquetas',
+    ph_label_name:       'Nombre de etiqueta…',
+    btn_add_label:       'Añadir',
+    label_checklist:     'Lista de Verificación',
+    ph_checklist_item:   'Añadir elemento…',
+    btn_add_item:        'Añadir',
+    label_attachments:   'Adjuntos',
+    label_cover:         'Portada',
+    label_assignee:      'Asignado',
+    unassigned:          'Sin asignar',
+    label_comments:      'Comentarios',
+    ph_comment:          'Escribe un comentario…',
+    btn_comment:         'Comentar',
+    label_activity:      'Actividad',
+    btn_delete_card:     'Eliminar Tarjeta',
+    btn_upload_image:    'Subir Imagen',
+    btn_remove_cover:    'Quitar Portada',
+
+    status_new:          'Nuevo',
+    status_approved:     'Aprobado',
+    status_fixed:        'Corregido',
+    status_for_followup: 'En Seguimiento',
+    status_completed:    'Completado',
+    status_cancelled:    'Cancelado',
+
+    priority_none:   'Ninguna',
+    priority_low:    'Baja',
+    priority_medium: 'Media',
+    priority_high:   'Alta',
+
+    col_menu_rename: 'Renombrar Columna',
+    col_menu_color:  'Cambiar Color',
+    col_menu_delete: 'Eliminar Columna',
+
+    invite_title:       'Invitar Colaborador',
+    label_invite_email: 'Dirección de correo',
+    ph_invite_email:    'colega@ejemplo.com',
+    label_invite_role:  'Permiso',
+    role_editor:        'Editor',
+    role_viewer:        'Lector',
+    role_admin:         'Administrador',
+    current_members:    'Colaboradores Actuales',
+    btn_send_invite:    'Enviar Invitación',
+
+    upgrade_title:      'Actualizar a Premium',
+    upgrade_monthly:    'Mensual',
+    upgrade_annual:     'Anual',
+    upgrade_save:       'Ahorra 17%',
+    upgrade_signin_note:'Inicia sesión con Google para actualizar.',
+    btn_upgrade_now:    'Actualizar Ahora',
+
+    downgrade_title:     'Suscripción Finalizada',
+    downgrade_body:      'Tu suscripción premium ha finalizado. Exporta tus datos o renueva para mantener la sincronización.',
+    btn_renew:           'Renovar Premium',
+    btn_continue_free:   'Continuar con Plan Gratuito',
+  },
+};
+
+// ── Public API ────────────────────────────────────────────────────────────
+
+/** Get a translation string for the current language. Falls back to English. */
+export function t(key) {
+  return (T[_lang]?.[key] ?? T.en[key]) ?? key;
+}
+
+export function getLanguage() { return _lang; }
+
+export async function setLanguage(lang) {
+  if (!T[lang]) return;
+  _lang = lang;
+  document.documentElement.lang = lang;
+  localStorage.setItem('language', lang);
+  applyTranslations();
+}
+
+export async function loadLanguage() {
+  const stored = localStorage.getItem('language');
+  _lang = T[stored] ? stored : 'en';
+  document.documentElement.lang = _lang;
+}
+
+/**
+ * Walk the DOM and apply translations to:
+ *   data-i18n          → textContent
+ *   data-i18n-ph       → placeholder
+ *   data-i18n-title    → title attribute
+ *   data-i18n-html     → innerHTML (safe static strings only)
+ */
+export function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    const v = t(el.dataset.i18n);
+    if (v) el.textContent = v;
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach((el) => {
+    const v = t(el.dataset.i18nPh);
+    if (v) el.placeholder = v;
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach((el) => {
+    const v = t(el.dataset.i18nTitle);
+    if (v) el.title = v;
+  });
+}

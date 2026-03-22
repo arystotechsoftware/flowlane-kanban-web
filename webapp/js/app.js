@@ -35,6 +35,7 @@ import { paddleConfig } from './firebase-config.js';
 import { showToast, openModal, closeModal, initModalOverlays,
   initDropdowns, initColorPicker, setUserAvatar, setTierBadge,
   applyTheme, loadTheme } from './ui.js';
+import { loadLanguage, applyTranslations, setLanguage, getLanguage, SUPPORTED_LANGUAGES } from './i18n.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const FREE_LIMIT = 3;
@@ -89,6 +90,7 @@ function logProjectManagerAction(action, details = {}) {
 
 async function boot() {
   await loadTheme();
+  await loadLanguage();
   await loadSwimlanePref();
 
   show('loading-screen');
@@ -96,6 +98,7 @@ async function boot() {
   initModalOverlays();
   initDropdowns();
   wireStaticButtons();
+  applyTranslations();
 
   onAuthChange(async (user) => {
     if (user) {
@@ -1221,6 +1224,17 @@ function wireStaticButtons() {
     btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
   });
 
+  const langSelect = document.getElementById('language-select');
+  if (langSelect && langSelect.options.length === 0) {
+    SUPPORTED_LANGUAGES.forEach(({ code, label }) => {
+      const opt = document.createElement('option');
+      opt.value = code;
+      opt.textContent = label;
+      langSelect.appendChild(opt);
+    });
+  }
+  langSelect?.addEventListener('change', () => setLanguage(langSelect.value));
+
   // ── Search ──────────────────────────────────────────────────────────────
 
   const searchInput = document.getElementById('search-input')
@@ -1488,6 +1502,8 @@ function wireStaticButtons() {
     // Sync default-view selector to current view mode
     const dvSel = document.getElementById('default-view-select');
     if (dvSel) dvSel.value = getSwimlaneMode() ? 'swimlane' : 'board';
+    const langSel = document.getElementById('language-select');
+    if (langSel) langSel.value = getLanguage();
 
     // Show project status in settings
     const currentProj = _state.projects.find(p => p.id === _state.currentProjectId);
