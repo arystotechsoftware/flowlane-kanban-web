@@ -84,6 +84,21 @@ export async function deleteProject(projectId) {
   return local.localDeleteProject(projectId);
 }
 
+export async function hardDeleteProject(projectId) {
+  if (_isPremium) return remote.hardDeleteProject(projectId);
+  return local.localHardDeleteProject(projectId);
+}
+
+export async function getDeletedProjects() {
+  if (_isPremium) return remote.getDeletedProjects(_uid);
+  return local.localGetDeletedProjects();
+}
+
+export async function restoreDeletedProject(projectId) {
+  if (_isPremium) return remote.restoreDeletedProject(projectId, _uid);
+  return local.localRestoreDeletedProject(projectId);
+}
+
 // ── COLUMNS ───────────────────────────────────────────────────────────────
 
 export async function getColumns(projectId) {
