@@ -691,31 +691,31 @@
 
         <!-- Default View -->
         <div class="settings-section">
-          <label class="form-label">Default View</label>
+          <label class="form-label" data-i18n="settings_default_view_label">Default View</label>
           <select id="default-view-select" class="form-input">
-            <option value="board">Board View (Kanban columns)</option>
-            <option value="swimlane">Swimlane View (grouped by status)</option>
+            <option value="board" data-i18n="settings_default_view_board">Board View (Kanban columns)</option>
+            <option value="swimlane" data-i18n="settings_default_view_swimlane">Swimlane View (grouped by status)</option>
           </select>
         </div>
 
         <!-- Project Management -->
         <div class="settings-section">
           <label class="form-label">
-            Project Management
-            <span class="form-hint">Search &amp; browse all projects</span>
+            <span data-i18n="settings_project_mgmt_label">Project Management</span>
+            <span class="form-hint" data-i18n="settings_project_mgmt_hint">Search &amp; browse all projects</span>
           </label>
           <button class="btn-ghost" id="browse-projects-btn" type="button" style="width:100%">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px">
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
             </svg>
-            Browse All Projects
+            <span data-i18n="btn_browse_projects">Browse All Projects</span>
           </button>
         </div>
 
         <div class="settings-section" id="invitations-section">
           <label class="form-label">
-            Invitations
-            <span class="form-hint">Review incoming and outgoing invitations</span>
+            <span data-i18n="settings_invitations_label">Invitations</span>
+            <span class="form-hint" data-i18n="settings_invitations_hint">Review incoming and outgoing invitations</span>
           </label>
           <button class="btn-ghost" id="manage-invitations-btn" type="button" style="width:100%">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px">
@@ -723,36 +723,36 @@
               <circle cx="9" cy="7" r="4"/>
               <line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/>
             </svg>
-            Manage Invitations
+            <span data-i18n="btn_manage_invitations">Manage Invitations</span>
           </button>
         </div>
 
         <!-- Current Project Status -->
         <div class="settings-section" id="project-status-section">
           <label class="form-label">
-            Current Project Status
-            <span class="form-hint">Only project admins can change status</span>
+            <span data-i18n="settings_project_status_label">Current Project Status</span>
+            <span class="form-hint" data-i18n="settings_project_status_hint">Only project admins can change status</span>
           </label>
           <div style="display:flex;align-items:center;gap:8px">
             <span id="current-project-status-badge" class="project-status-badge project-status-badge--new">New</span>
-            <button class="btn-ghost btn-sm" id="change-project-status-btn" type="button" style="display:none">Change Status</button>
+            <button class="btn-ghost btn-sm" id="change-project-status-btn" type="button" style="display:none" data-i18n="btn_change_status">Change Status</button>
           </div>
         </div>
 
         <!-- Columns -->
         <div class="settings-section">
-          <label class="form-label">Columns</label>
+          <label class="form-label" data-i18n="settings_columns_label">Columns</label>
           <div class="column-add-row">
-            <input id="new-column-name" type="text" class="form-input" placeholder="New column name&hellip;" maxlength="30" />
-            <button id="add-column-btn" class="btn btn-sm btn-primary" type="button">Add Column</button>
+            <input id="new-column-name" type="text" class="form-input" placeholder="New column name&hellip;" data-i18n-ph="ph_new_column_name" maxlength="30" />
+            <button id="add-column-btn" class="btn btn-sm btn-primary" type="button" data-i18n="btn_add_column">Add Column</button>
           </div>
         </div>
 
         <!-- Cloud Storage -->
         <div class="settings-section hidden" id="storage-section">
           <label class="form-label">
-            Cloud Storage
-            <span class="form-hint">Attachments &amp; cover images</span>
+            <span data-i18n="settings_storage_label">Cloud Storage</span>
+            <span class="form-hint" data-i18n="settings_storage_hint">Attachments &amp; cover images</span>
           </label>
           <div class="storage-bar-wrap">
             <div class="storage-bar">
@@ -762,7 +762,7 @@
               <span id="storage-used-text" class="storage-used-text">Calculating&hellip;</span>
               <button class="btn-ghost btn-sm" id="buy-storage-btn" type="button">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:3px;vertical-align:middle"><path d="M12 5v14M5 12h14"/></svg>
-                Buy +1 GB &middot; $9.99
+                <span data-i18n="btn_buy_storage">Buy +1 GB &middot; $9.99</span>
               </button>
             </div>
           </div>
@@ -770,28 +770,28 @@
 
         <!-- Export / Import -->
         <div id="export-section" class="settings-section">
-          <label class="form-label">Export Your Data</label>
+          <label class="form-label" data-i18n="settings_export_label">Export Your Data</label>
           <div class="import-export-row">
             <button id="export-json-btn" class="btn-ghost" type="button">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Export JSON
+              <span data-i18n="btn_export_json">Export JSON</span>
             </button>
           </div>
-          <label class="form-label" style="margin-top:14px">Import Data</label>
+          <label class="form-label" style="margin-top:14px" data-i18n="settings_import_label">Import Data</label>
           <div class="import-export-row">
             <button id="import-json-btn" class="btn-ghost" type="button">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              Import JSON
+              <span data-i18n="btn_import_json">Import JSON</span>
             </button>
             <input id="import-file-input" type="file" accept=".json" class="hidden" />
           </div>
-          <p style="font-size:11px;color:var(--text-muted);margin-top:6px">Imports all projects from a FlowLane JSON export. Existing data is kept.</p>
+          <p style="font-size:11px;color:var(--text-muted);margin-top:6px" data-i18n="settings_import_hint">Imports all projects from a FlowLane JSON export. Existing data is kept.</p>
         </div>
 
         <!-- Danger Zone -->
         <div class="settings-section danger-zone">
-          <label class="form-label">Danger Zone</label>
-          <button class="btn-danger-sm" id="settings-delete-project-btn" type="button">Delete Current Project</button>
+          <label class="form-label" data-i18n="settings_danger_label">Danger Zone</label>
+          <button class="btn-danger-sm" id="settings-delete-project-btn" type="button" data-i18n="btn_delete_project">Delete Current Project</button>
         </div>
       </div>
       <div class="modal-footer">
