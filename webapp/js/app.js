@@ -12,10 +12,10 @@
  *  - No i18n module — inline English strings
  *  - No import module (inline implementation)
  *  - No open-window functionality
- *  - Auth button IDs: 'google-sign-in-btn' and 'skip-auth-btn'
+ *  - Auth entry points: provider buttons plus the shared email/password form
  */
 
-import { onAuthChange, signInWithGoogle, signOut, getCurrentUser, handleRedirectResult } from './auth.js';
+import { onAuthChange, signInWithGoogle, signInWithGitHub, signInWithEmailPassword, registerWithEmailPassword, sendPasswordReset, signOut, getCurrentUser, handleRedirectResult } from './auth.js';
 import { upsertUser, listenUser, listenProjects, inviteCollaborator, getProject,
   removeCollaborator, updateCollaboratorRole, getPendingInvites,
   acceptInvite, getSentInvites, getAcceptedInvites, declineInvite, revokeInvite,
@@ -99,6 +99,7 @@ async function boot() {
   initDropdowns();
   wireStaticButtons();
   applyTranslations();
+  await handleRedirectResult();
 
   onAuthChange(async (user) => {
     if (user) {
@@ -124,6 +125,16 @@ function show(screenId) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 async function handleSignIn(user) {
+  if (isUnverifiedEmailPasswordUser(user)) {
+    await signOut().catch(() => {});
+    show('auth-screen');
+    showToast(
+      `Please verify ${user.email ?? 'your email address'} before signing in. Check your inbox for the verification link.`,
+      'warning',
+    );
+    return;
+  }
+
   _state.user = user;
   _state.pendingInviteCheckKey = null;
 
@@ -1170,12 +1181,85 @@ function wireStaticButtons() {
 
   // ── Auth screen ─────────────────────────────────────────────────────────
 
-  document.getElementById('google-sign-in-btn')?.addEventListener('click', async () => {
+  let authMode = 'signin';
+  const authEmailInput = document.getElementById('auth-email-input');
+  const authPasswordInput = document.getElementById('auth-password-input');
+  const authSubmitBtn = document.getElementById('auth-submit-btn');
+  const authResetBtn = document.getElementById('auth-reset-password-btn');
+  const authModeSignInBtn = document.getElementById('auth-mode-signin-btn');
+  const authModeRegisterBtn = document.getElementById('auth-mode-register-btn');
+
+  const setAuthMode = (mode) => {
+    authMode = mode;
+    authModeSignInBtn?.classList.toggle('active', mode === 'signin');
+    authModeRegisterBtn?.classList.toggle('active', mode === 'register');
+    if (authSubmitBtn) authSubmitBtn.textContent = mode === 'signin' ? 'Sign In with Email' : 'Create Account';
+    if (authPasswordInput) {
+      authPasswordInput.autocomplete = mode === 'signin' ? 'current-password' : 'new-password';
+    }
+    if (authResetBtn) {
+      authResetBtn.style.display = mode === 'signin' ? '' : 'none';
+    }
+  };
+
+  const runAuthAction = async (action, label, failurePrefix = 'Sign-in failed.') => {
     try {
-      await signInWithGoogle();
+      await action();
     } catch (err) {
-      console.error('[SignIn]', err);
-      showToast('Sign-in failed. Check your configuration.', 'error');
+      console.error(`[${label}]`, err);
+      showToast(`${failurePrefix} ${err.message}`, 'error');
+    }
+  };
+
+  setAuthMode('signin');
+
+  document.getElementById('google-sign-in-btn')?.addEventListener('click', async () => {
+    await runAuthAction(() => signInWithGoogle(), 'SignInGoogle');
+  });
+
+  document.getElementById('github-sign-in-btn')?.addEventListener('click', async () => {
+    await runAuthAction(() => signInWithGitHub(), 'SignInGitHub');
+  });
+
+  authModeSignInBtn?.addEventListener('click', () => setAuthMode('signin'));
+  authModeRegisterBtn?.addEventListener('click', () => setAuthMode('register'));
+
+  document.getElementById('auth-email-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const email = authEmailInput?.value?.trim() ?? '';
+    const password = authPasswordInput?.value ?? '';
+
+    if (!email || !password) {
+      showToast('Enter both your email and password.', 'warning');
+      return;
+    }
+
+    await runAuthAction(async () => {
+      if (authMode === 'register') {
+        await registerWithEmailPassword(email, password);
+        authPasswordInput.value = '';
+        setAuthMode('signin');
+        showToast(`Verification email sent to ${email}. Please verify your address before signing in.`, 'success');
+        return;
+      }
+      await signInWithEmailPassword(email, password);
+    }, authMode === 'register' ? 'RegisterEmail' : 'SignInEmail', authMode === 'register' ? 'Could not create account.' : 'Sign-in failed.');
+  });
+
+  authResetBtn?.addEventListener('click', async () => {
+    const email = authEmailInput?.value?.trim() ?? '';
+    if (!email) {
+      showToast('Enter your email address first.', 'warning');
+      authEmailInput?.focus();
+      return;
+    }
+
+    try {
+      await sendPasswordReset(email);
+      showToast('Password reset email sent.', 'success');
+    } catch (err) {
+      console.error('[PasswordReset]', err);
+      showToast(`Could not send reset email. ${err.message}`, 'error');
     }
   });
 
@@ -1489,6 +1573,12 @@ function wireStaticButtons() {
   document.getElementById('sign-out-btn')?.addEventListener('click', async () => {
     document.getElementById('user-dropdown')?.classList.add('hidden');
     await signOut();
+  });
+
+  document.getElementById('sign-in-menu-btn')?.addEventListener('click', () => {
+    document.getElementById('user-dropdown')?.classList.add('hidden');
+    show('auth-screen');
+    document.getElementById('auth-email-input')?.focus();
   });
 
   // ── Settings ────────────────────────────────────────────────────────────
@@ -2768,8 +2858,22 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
+function isUnverifiedEmailPasswordUser(user) {
+  return !!user?.email
+    && !user.emailVerified
+    && user.providerData?.some((provider) => provider?.providerId === 'password');
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // START
 // ══════════════════════════════════════════════════════════════════════════════
 
 boot();
+
+
+
+
+
+
+
+

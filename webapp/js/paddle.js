@@ -10,7 +10,7 @@
  */
 
 import { getCurrentUser } from './auth.js';
-import { FUNCTIONS_BASE_URL } from './firebase-config.js';
+import { FUNCTIONS_BASE_URL, firebaseConfig } from './firebase-config.js';
 import { showToast } from './ui.js';
 
 /**
@@ -52,7 +52,14 @@ export async function startCheckout(priceId) {
       body: JSON.stringify({ priceId }),
     });
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      let detail = '';
+      try {
+        const data = await res.json();
+        detail = data?.error ? `: ${data.error}` : '';
+      } catch {}
+      throw new Error(`HTTP ${res.status}${detail}`);
+    }
 
     const { url } = await res.json();
     if (!url) throw new Error('No checkout URL returned');
@@ -65,7 +72,7 @@ export async function startCheckout(priceId) {
     document.getElementById('upgrade-modal')?.classList.add('hidden');
   } catch (err) {
     console.error('[Paddle] Checkout error:', err);
-    showToast('Could not start checkout. Check your Firebase Functions setup.', 'error');
+    showToast(`Could not start checkout. ${err.message}`, 'error');
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -97,13 +104,20 @@ export async function openBillingPortal() {
       },
     });
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      let detail = '';
+      try {
+        const data = await res.json();
+        detail = data?.error ? `: ${data.error}` : '';
+      } catch {}
+      throw new Error(`HTTP ${res.status}${detail}`);
+    }
     const { url } = await res.json();
     if (!isSafePaddleUrl(url)) throw new Error('Invalid Paddle URL');
     window.open(url, '_blank');
   } catch (err) {
     console.error('[Paddle] Portal error:', err);
-    showToast('Could not open billing portal', 'error');
+    showToast(`Could not open billing portal. ${err.message}`, 'error');
   }
 }
 
@@ -137,7 +151,14 @@ export async function purchaseStorageAddon() {
       },
     });
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      let detail = '';
+      try {
+        const data = await res.json();
+        detail = data?.error ? `: ${data.error}` : '';
+      } catch {}
+      throw new Error(`HTTP ${res.status}${detail}`);
+    }
     const { url } = await res.json();
     if (!url) throw new Error('No checkout URL returned');
     if (!isSafePaddleUrl(url)) throw new Error('Invalid Paddle URL');
@@ -146,7 +167,7 @@ export async function purchaseStorageAddon() {
     showToast('Paddle Checkout opened in a new tab', 'info');
   } catch (err) {
     console.error('[Paddle] Storage addon checkout error:', err);
-    showToast('Could not start checkout. Check your Firebase Functions setup.', 'error');
+    showToast(`Could not start checkout. ${err.message}`, 'error');
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Buy +1 GB \u00b7 $9.99'; }
   }
@@ -158,9 +179,19 @@ export async function purchaseStorageAddon() {
 export function isSafePaddleUrl(url) {
   try {
     const u = new URL(url);
+    const allowedHostedCheckoutHosts = new Set([
+      `${firebaseConfig.projectId}.web.app`,
+      `${firebaseConfig.projectId}.firebaseapp.com`,
+    ]);
+
+    const isHostedCheckoutLauncher =
+      allowedHostedCheckoutHosts.has(u.hostname) &&
+      u.pathname === '/paddle-checkout.html';
+
     return u.protocol === 'https:' &&
       (u.hostname === 'checkout.paddle.com' ||
        u.hostname === 'customer.paddle.com' ||
-       u.hostname.endsWith('.paddle.com'));
+       u.hostname.endsWith('.paddle.com') ||
+       isHostedCheckoutLauncher);
   } catch { return false; }
 }
