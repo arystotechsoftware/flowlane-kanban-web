@@ -453,6 +453,8 @@
     .price-features li .check { color: var(--green); }
     .price-features li .x { color: var(--text3); }
     .price-btn { width: 100%; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 700; transition: all .2s; text-align: center; display: block; }
+    .price-actions { display: flex; flex-direction: column; gap: 12px; }
+    .price-subnote { margin-top: 14px; font-size: 12px; color: var(--text3); text-align: center; }
     .coffee-badge {
       display: inline-flex; align-items: center; gap: 6px;
       margin-top: 16px; padding: 6px 14px; border-radius: 99px;
@@ -531,6 +533,14 @@
     .footer-top { display: flex; gap: 64px; margin-bottom: 40px; flex-wrap: wrap; }
     .footer-brand { flex: 0 0 240px; }
     .footer-brand p { font-size: 14px; color: var(--text3); margin-top: 12px; line-height: 1.7; }
+    .footer-company {
+      display: inline-block;
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.7;
+    }
+    .footer-company a { color: var(--accent3); }
     .footer-cols { display: flex; gap: 48px; flex: 1; flex-wrap: wrap; }
     .footer-col h4 { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text3); margin-bottom: 16px; }
     .footer-col a { display: block; font-size: 14px; color: var(--text3); margin-bottom: 10px; transition: color .2s; }
@@ -1110,14 +1120,18 @@
             <span style="color:var(--accent3)"><strong>Web App access</strong> — use on any browser, no extension needed</span>
           </li>
         </ul>
-        <a href="https://app.flowlanekanban.com" class="price-btn btn-primary" style="display:block;text-align:center;border-radius:10px;">Get Premium &amp; Open Web App</a>
+        <div class="price-actions">
+          <a href="https://app.flowlanekanban.com/?intent=subscribe&amp;plan=monthly" id="premiumCheckoutBtn" class="price-btn btn-primary" style="display:block;text-align:center;border-radius:10px;">Get Premium</a>
+          <a href="https://app.flowlanekanban.com" id="openWebAppBtn" class="price-btn btn-outline" style="border:1px solid var(--border2);color:var(--text);display:block;text-align:center;border-radius:10px;">Open Web App</a>
+        </div>
+        <div class="price-subnote">Buy Premium from the extension or continue in the web app.</div>
         <div class="coffee-badge" style="justify-content:center;width:100%;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
           Less than a cup of coffee
         </div>
       </div>
     </div>
-    <p style="text-align:center;margin-top:24px;font-size:13px;color:var(--text3)">Secure payment processing &middot; Cancel anytime from the extension</p>
+    <p style="text-align:center;margin-top:24px;font-size:13px;color:var(--text3)">Secure payment processing via Paddle &middot; Buy Premium from the extension or the web app</p>
   </div>
 </section>
 
@@ -1286,6 +1300,10 @@
           FlowLane
         </a>
         <p>Personal Kanban that lives in your browser. Organize your work, collaborate in real time, and stay in flow.</p>
+        <div class="footer-company">
+          FlowLane is a product of ArystoTech Software &amp; AI Services Ltd.<br />
+          Support: <a href="mailto:support@flowlanekanban.com">support@flowlanekanban.com</a>
+        </div>
       </div>
       <div class="footer-cols">
         <div class="footer-col">
@@ -1299,7 +1317,7 @@
         <div class="footer-col">
           <h4>Support</h4>
           <a href="#faq">FAQ</a>
-          <a href="mailto:support@flowlanekanban.com">Contact</a>
+          <a href="mailto:support@flowlanekanban.com">support@flowlanekanban.com</a>
           <a href="#">Privacy Policy</a>
           <a href="#">Terms of Service</a>
         </div>
@@ -1358,7 +1376,15 @@
   const toggleAnnual = document.getElementById('toggleAnnual');
   const premiumPrice = document.getElementById('premiumPrice');
   const premiumPeriod = document.getElementById('premiumPeriod');
+  const premiumCheckoutBtn = document.getElementById('premiumCheckoutBtn');
   let isAnnual = false;
+
+  function updatePremiumCta() {
+    if (!premiumCheckoutBtn) return;
+    premiumCheckoutBtn.href = isAnnual
+      ? 'https://app.flowlanekanban.com/?intent=subscribe&plan=annual'
+      : 'https://app.flowlanekanban.com/?intent=subscribe&plan=monthly';
+  }
 
   pricingSwitch.addEventListener('click', () => {
     isAnnual = !isAnnual;
@@ -1381,6 +1407,8 @@
       premiumPrice.classList.remove('price-fade');
       premiumPeriod.classList.remove('price-fade');
     }, 200);
+
+    updatePremiumCta();
   });
 
   toggleMonthly.addEventListener('click', () => {
@@ -1389,6 +1417,8 @@
   toggleAnnual.addEventListener('click', () => {
     if (!isAnnual) pricingSwitch.click();
   });
+
+  updatePremiumCta();
 
   // Smooth active nav link highlight on scroll
   const sections = document.querySelectorAll('section[id]');

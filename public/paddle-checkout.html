@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>FlowLane Checkout</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d1018;
+      --panel: #181d29;
+      --panel-2: #202737;
+      --text: #eef2ff;
+      --muted: #9aa6c7;
+      --accent: #7c6cff;
+      --accent-2: #5ef0c5;
+      --border: rgba(255, 255, 255, 0.08);
+      --danger: #ff7b7b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(124, 108, 255, 0.22), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(94, 240, 197, 0.12), transparent 28%),
+        var(--bg);
+      color: var(--text);
+    }
+
+    .card {
+      width: min(560px, 100%);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+      padding: 28px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-2);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 5vw, 40px);
+      line-height: 1.04;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .status {
+      margin-top: 24px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .status strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .status.error strong {
+      color: var(--danger);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 22px;
+      flex-wrap: wrap;
+    }
+
+    button,
+    a {
+      appearance: none;
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font: inherit;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    button {
+      background: var(--accent);
+      color: white;
+      font-weight: 700;
+    }
+
+    button.secondary,
+    a.secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    code {
+      font-family: Consolas, "SFMono-Regular", monospace;
+      font-size: 0.95em;
+      color: #c6d0ff;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="eyebrow">FlowLane Billing</div>
+    <h1>Opening Paddle checkout</h1>
+    <p>
+      This page is the public checkout launcher used by FlowLane's Paddle
+      transaction URLs.
+    </p>
+
+    <section class="status" id="statusBox">
+      <strong id="statusTitle">Preparing checkout...</strong>
+      <p id="statusMessage">If nothing opens automatically, use the button below.</p>
+    </section>
+
+    <div class="actions">
+      <button id="retryButton" type="button" hidden>Open checkout</button>
+      <a class="secondary" href="/" id="homeLink">Return to FlowLane site</a>
+    </div>
+  </main>
+
+  <script src="/paddle-checkout-config.js"></script>
+  <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+  <script>
+    (function () {
+      var statusBox = document.getElementById('statusBox');
+      var statusTitle = document.getElementById('statusTitle');
+      var statusMessage = document.getElementById('statusMessage');
+      var retryButton = document.getElementById('retryButton');
+
+      function setStatus(title, message, isError) {
+        statusTitle.textContent = title;
+        statusMessage.innerHTML = message;
+        statusBox.classList.toggle('error', Boolean(isError));
+      }
+
+      function getTransactionId() {
+        var params = new URLSearchParams(window.location.search);
+        return (
+          params.get('_ptxn') ||
+          params.get('ptxn') ||
+          params.get('transaction_id') ||
+          ''
+        );
+      }
+
+      function isPlaceholderToken(token) {
+        return !token || token.indexOf('REPLACE_WITH_YOUR') !== -1;
+      }
+
+      var config = window.FLOWLANE_PADDLE_CHECKOUT || {};
+      var token = config.clientToken || '';
+      var environment = config.environment || 'sandbox';
+      var transactionId = getTransactionId();
+
+      function openCheckout() {
+        if (!transactionId) {
+          setStatus(
+            'Missing transaction ID',
+            'This page should be opened from a Paddle checkout URL that includes <code>_ptxn</code>.',
+            true
+          );
+          retryButton.hidden = true;
+          return;
+        }
+
+        try {
+          Paddle.Checkout.open({
+            transactionId: transactionId,
+            settings: {
+              allowLogout: false,
+              displayMode: 'overlay',
+              theme: 'dark'
+            }
+          });
+
+          setStatus(
+            'Checkout opened',
+            'If the Paddle overlay did not appear, use <strong>Open checkout</strong> below.',
+            false
+          );
+          retryButton.hidden = false;
+        } catch (err) {
+          setStatus(
+            'Could not open checkout',
+            (err && err.message) ? err.message : 'Unknown Paddle.js error.',
+            true
+          );
+          retryButton.hidden = false;
+        }
+      }
+
+      retryButton.addEventListener('click', openCheckout);
+
+      if (isPlaceholderToken(token)) {
+        setStatus(
+          'Client-side token not configured',
+          'Edit <code>public/paddle-checkout-config.js</code> and replace the placeholder token with your Paddle sandbox client-side token.',
+          true
+        );
+        retryButton.hidden = true;
+        return;
+      }
+
+      if (environment === 'sandbox') {
+        Paddle.Environment.set('sandbox');
+      }
+
+      Paddle.Initialize({
+        token: token,
+        checkout: {
+          settings: {
+            allowLogout: false,
+            displayMode: 'overlay',
+            theme: 'dark'
+          }
+        }
+      });
+
+      openCheckout();
+    })();
+  </script>
+</body>
+</html>
