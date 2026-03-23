@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — FlowLane</title>
+  <meta name="description" content="FlowLane Privacy Policy — what data we collect, how we use it, and your rights." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #0b0d14;
+      --bg2:      #111420;
+      --bg3:      #181c2e;
+      --surface:  #1e2235;
+      --border:   rgba(255,255,255,.07);
+      --border2:  rgba(255,255,255,.12);
+      --accent:   #7c5cfc;
+      --accent2:  #a78bfa;
+      --accent3:  #c4b5fd;
+      --teal:     #2dd4bf;
+      --text:     #f1f3ff;
+      --text2:    #9aa0c0;
+      --text3:    #5a6080;
+      --radius:   14px;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; overflow-x: hidden; }
+    a { color: var(--accent3); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--surface); border-radius: 99px; }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(11,13,20,.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+    }
+    .nav-inner {
+      max-width: 1160px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; color: var(--text); }
+    .logo img { border-radius: 8px; }
+    .nav-back { font-size: 14px; color: var(--text2); display: flex; align-items: center; gap: 6px; transition: color .2s; }
+    .nav-back:hover { color: var(--text); text-decoration: none; }
+
+    .legal-hero {
+      background: linear-gradient(180deg, var(--bg2) 0%, var(--bg) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 56px 24px 40px;
+      text-align: center;
+    }
+    .legal-hero .eyebrow {
+      display: inline-block;
+      font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--teal); margin-bottom: 14px;
+    }
+    .legal-hero h1 { font-size: clamp(28px, 5vw, 42px); font-weight: 800; margin-bottom: 12px; }
+    .legal-hero .meta { font-size: 14px; color: var(--text3); }
+
+    .legal-wrap { max-width: 800px; margin: 0 auto; padding: 56px 24px 80px; }
+
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin-bottom: 48px;
+    }
+    .toc h2 { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text3); margin-bottom: 14px; }
+    .toc ol { padding-left: 20px; }
+    .toc li { font-size: 14px; margin-bottom: 6px; }
+    .toc li a { color: var(--accent3); }
+
+    .legal-section { margin-bottom: 48px; }
+    .legal-section h2 {
+      font-size: 20px; font-weight: 700; margin-bottom: 16px;
+      padding-bottom: 10px; border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    .legal-section h3 { font-size: 16px; font-weight: 600; color: var(--text2); margin: 20px 0 8px; }
+    .legal-section p { font-size: 15px; color: var(--text2); margin-bottom: 14px; }
+    .legal-section ul, .legal-section ol { padding-left: 24px; margin-bottom: 14px; }
+    .legal-section li { font-size: 15px; color: var(--text2); margin-bottom: 6px; }
+    .legal-section strong { color: var(--text); }
+
+    .data-table {
+      width: 100%; border-collapse: collapse; margin: 16px 0;
+      font-size: 14px;
+    }
+    .data-table th {
+      background: var(--surface); color: var(--text3);
+      font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+      padding: 10px 14px; text-align: left;
+      border-bottom: 1px solid var(--border2);
+    }
+    .data-table td {
+      padding: 12px 14px; color: var(--text2);
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .callout {
+      background: rgba(45,212,191,.07);
+      border: 1px solid rgba(45,212,191,.2);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin: 20px 0;
+    }
+    .callout p { margin: 0; font-size: 14px; color: #2dd4bf; }
+
+    footer {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+    }
+    .footer-links { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; }
+    .footer-links a { font-size: 13px; color: var(--text3); transition: color .2s; }
+    .footer-links a:hover { color: var(--text); text-decoration: none; }
+    .footer-copy { font-size: 13px; color: var(--text3); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="logo">
+      <img src="/logo.png" alt="FlowLane" width="30" height="30" />
+      FlowLane
+    </a>
+    <a href="/" class="nav-back">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M5 12l7-7M5 12l7 7"/></svg>
+      Back to home
+    </a>
+  </div>
+</nav>
+
+<div class="legal-hero">
+  <span class="eyebrow">Legal</span>
+  <h1>Privacy Policy</h1>
+  <p class="meta">Last updated: 23 March 2026 &nbsp;·&nbsp; Effective: 23 March 2026</p>
+</div>
+
+<div class="legal-wrap">
+
+  <div class="toc">
+    <h2>Table of Contents</h2>
+    <ol>
+      <li><a href="#overview">Overview &amp; Scope</a></li>
+      <li><a href="#data-collected">Data We Collect</a></li>
+      <li><a href="#how-we-use">How We Use Your Data</a></li>
+      <li><a href="#third-parties">Third-Party Services</a></li>
+      <li><a href="#data-storage">Data Storage &amp; Security</a></li>
+      <li><a href="#retention">Data Retention</a></li>
+      <li><a href="#your-rights">Your Rights</a></li>
+      <li><a href="#children">Children's Privacy</a></li>
+      <li><a href="#changes">Changes to This Policy</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ol>
+  </div>
+
+  <!-- 1 -->
+  <div class="legal-section" id="overview">
+    <h2>1. Overview &amp; Scope</h2>
+    <p>This Privacy Policy describes how <strong>ArystoTech Software &amp; AI Systems Ltd.</strong> ("we", "us", "our") collects, uses, and protects information when you use <strong>FlowLane</strong> — including the browser extension and web application at <a href="https://flowlanekanban.com">flowlanekanban.com</a>.</p>
+    <p>We are committed to protecting your privacy. We collect only the minimum data required to provide the Service, and we never sell your personal information.</p>
+
+    <div class="callout">
+      <p><strong>Free Tier users:</strong> Your board data never leaves your device. It is stored locally in your browser using <code>chrome.storage.local</code>. We have no access to it.</p>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="legal-section" id="data-collected">
+    <h2>2. Data We Collect</h2>
+
+    <h3>2.1 Free Tier (No Account Required)</h3>
+    <p>When using the Free Tier, <strong>no personal data is collected by us</strong>. All board data (projects, columns, cards) is stored locally in your browser via <code>chrome.storage.local</code> and is never transmitted to our servers.</p>
+
+    <h3>2.2 Premium Tier (Account Required)</h3>
+    <p>When you create an account and subscribe to the Premium Tier, we collect:</p>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Source</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Display name &amp; email address</strong></td>
+          <td>Google / GitHub OAuth</td>
+          <td>Account identification, transactional emails, support</td>
+        </tr>
+        <tr>
+          <td><strong>Profile photo URL</strong></td>
+          <td>Google / GitHub OAuth</td>
+          <td>Displayed in collaboration presence UI</td>
+        </tr>
+        <tr>
+          <td><strong>Firebase UID</strong></td>
+          <td>Firebase Authentication</td>
+          <td>Linking your data to your account</td>
+        </tr>
+        <tr>
+          <td><strong>Board data</strong> (projects, columns, cards, comments)</td>
+          <td>Created by you</td>
+          <td>Cloud sync and real-time collaboration</td>
+        </tr>
+        <tr>
+          <td><strong>Subscription status &amp; tier</strong></td>
+          <td>Paddle webhook</td>
+          <td>Granting/revoking Premium access</td>
+        </tr>
+        <tr>
+          <td><strong>Paddle customer ID</strong></td>
+          <td>Paddle</td>
+          <td>Linking billing records to your account</td>
+        </tr>
+        <tr>
+          <td><strong>Presence data</strong> (last-active timestamp)</td>
+          <td>Extension heartbeat</td>
+          <td>Showing online collaborators; purged after 45 seconds of inactivity</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>2.3 Usage &amp; Technical Data</h3>
+    <p>We may automatically collect limited technical data to maintain service reliability, including:</p>
+    <ul>
+      <li>Browser type and extension version (for bug reports you submit).</li>
+      <li>Cloud Function invocation logs (retained for up to 30 days by Firebase).</li>
+    </ul>
+    <p>We do not use analytics trackers, advertising pixels, or session recording tools.</p>
+  </div>
+
+  <!-- 3 -->
+  <div class="legal-section" id="how-we-use">
+    <h2>3. How We Use Your Data</h2>
+    <p>We use the data we collect solely to:</p>
+    <ul>
+      <li>Provide, maintain, and improve the Service.</li>
+      <li>Authenticate your identity and manage your account.</li>
+      <li>Sync your board data across devices (Premium Tier).</li>
+      <li>Enable real-time collaboration features (Premium Tier).</li>
+      <li>Process payments and manage your subscription via Paddle.</li>
+      <li>Send transactional communications (receipts, account alerts, downgrade notices).</li>
+      <li>Respond to support requests.</li>
+      <li>Comply with legal obligations.</li>
+    </ul>
+    <p>We do <strong>not</strong> use your data for advertising, profiling, or any purpose beyond providing the Service.</p>
+  </div>
+
+  <!-- 4 -->
+  <div class="legal-section" id="third-parties">
+    <h2>4. Third-Party Services</h2>
+    <p>We use the following sub-processors. Each is subject to their own privacy policy.</p>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Provider</th>
+          <th>Purpose</th>
+          <th>Data Shared</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Google Firebase</strong></td>
+          <td>Authentication, Firestore database, Cloud Functions</td>
+          <td>Email, UID, board data, subscription status</td>
+        </tr>
+        <tr>
+          <td><strong>Paddle.com Market Limited</strong></td>
+          <td>Payment processing, subscriptions, tax compliance (Merchant of Record)</td>
+          <td>Email, Firebase UID, billing details</td>
+        </tr>
+        <tr>
+          <td><strong>Google OAuth / GitHub OAuth</strong></td>
+          <td>Sign-in authentication</td>
+          <td>Name, email, profile photo (as provided by your OAuth provider)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>We do not share your data with any other third parties except as required by law.</p>
+  </div>
+
+  <!-- 5 -->
+  <div class="legal-section" id="data-storage">
+    <h2>5. Data Storage &amp; Security</h2>
+    <p>Premium Tier data is stored in <strong>Google Firebase Firestore</strong>, which is hosted on Google Cloud infrastructure with encryption at rest and in transit.</p>
+    <p>We implement reasonable technical and organisational measures to protect your data against unauthorised access, alteration, disclosure, or destruction, including:</p>
+    <ul>
+      <li>Firestore Security Rules that enforce per-user data access controls.</li>
+      <li>Cloud Functions restricted to authenticated requests from the extension's origin.</li>
+      <li>HTTPS for all data in transit.</li>
+      <li>Paddle-managed, PCI-DSS-compliant payment processing (we never store card details).</li>
+    </ul>
+    <p>No method of transmission over the internet is 100% secure. While we strive to protect your data, we cannot guarantee absolute security.</p>
+  </div>
+
+  <!-- 6 -->
+  <div class="legal-section" id="retention">
+    <h2>6. Data Retention</h2>
+    <p>We retain your data for as long as your account is active or as necessary to provide the Service.</p>
+    <ul>
+      <li><strong>Active accounts:</strong> Data retained until you delete your account.</li>
+      <li><strong>Presence data:</strong> Automatically purged after 45 seconds of inactivity.</li>
+      <li><strong>Cloud Function logs:</strong> Retained up to 30 days by Firebase.</li>
+      <li><strong>Billing records:</strong> Retained as required by Paddle and applicable tax law (typically 7 years).</li>
+      <li><strong>Deleted accounts:</strong> Personal data removed within 90 days of deletion request, except data required for legal compliance.</li>
+    </ul>
+  </div>
+
+  <!-- 7 -->
+  <div class="legal-section" id="your-rights">
+    <h2>7. Your Rights</h2>
+    <p>Depending on your jurisdiction, you may have the following rights regarding your personal data:</p>
+    <ul>
+      <li><strong>Access</strong> — Request a copy of the personal data we hold about you.</li>
+      <li><strong>Rectification</strong> — Request correction of inaccurate data.</li>
+      <li><strong>Erasure</strong> — Request deletion of your personal data ("right to be forgotten").</li>
+      <li><strong>Portability</strong> — Export your board data at any time using the JSON/CSV export feature built into FlowLane.</li>
+      <li><strong>Objection / Restriction</strong> — Object to or request restriction of certain processing.</li>
+      <li><strong>Withdraw Consent</strong> — Where processing is based on consent, withdraw it at any time by contacting us.</li>
+    </ul>
+    <p>To exercise any of these rights, email us at <a href="mailto:support@flowlanekanban.com">support@flowlanekanban.com</a>. We will respond within 30 days. We may need to verify your identity before processing your request.</p>
+  </div>
+
+  <!-- 8 -->
+  <div class="legal-section" id="children">
+    <h2>8. Children's Privacy</h2>
+    <p>The Service is not directed to children under 13. We do not knowingly collect personal information from children under 13. If you believe a child under 13 has provided us with personal data, please contact us and we will delete it promptly.</p>
+  </div>
+
+  <!-- 9 -->
+  <div class="legal-section" id="changes">
+    <h2>9. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. We will notify you of material changes by updating the "Last updated" date at the top of this page and, where appropriate, by sending a notice to your registered email address.</p>
+    <p>Continued use of the Service after changes are posted constitutes your acceptance of the updated policy.</p>
+  </div>
+
+  <!-- 10 -->
+  <div class="legal-section" id="contact">
+    <h2>10. Contact</h2>
+    <p>For privacy-related questions, data requests, or concerns, please contact us:</p>
+    <ul>
+      <li><strong>Company:</strong> ArystoTech Software &amp; AI Systems Ltd.</li>
+      <li><strong>Email:</strong> <a href="mailto:support@flowlanekanban.com">support@flowlanekanban.com</a></li>
+      <li><strong>Website:</strong> <a href="https://flowlanekanban.com">flowlanekanban.com</a></li>
+    </ul>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/privacy/">Privacy Policy</a>
+    <a href="/terms/">Terms &amp; Conditions</a>
+    <a href="/refund-policy/">Refund Policy</a>
+    <a href="mailto:support@flowlanekanban.com">Support</a>
+  </div>
+  <p class="footer-copy">&copy; 2026 FlowLane — ArystoTech Software &amp; AI Systems Ltd. All rights reserved.</p>
+</footer>
+
+</body>
+</html>

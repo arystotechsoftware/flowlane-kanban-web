@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Refund Policy — FlowLane</title>
+  <meta name="description" content="FlowLane Refund Policy — no refunds; subscriptions run to expiry then revert to the Free tier." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #0b0d14;
+      --bg2:      #111420;
+      --bg3:      #181c2e;
+      --surface:  #1e2235;
+      --border:   rgba(255,255,255,.07);
+      --border2:  rgba(255,255,255,.12);
+      --accent:   #7c5cfc;
+      --accent2:  #a78bfa;
+      --accent3:  #c4b5fd;
+      --amber:    #fbbf24;
+      --text:     #f1f3ff;
+      --text2:    #9aa0c0;
+      --text3:    #5a6080;
+      --radius:   14px;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; overflow-x: hidden; }
+    a { color: var(--accent3); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--surface); border-radius: 99px; }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(11,13,20,.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+    }
+    .nav-inner {
+      max-width: 1160px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; color: var(--text); }
+    .logo img { border-radius: 8px; }
+    .nav-back { font-size: 14px; color: var(--text2); display: flex; align-items: center; gap: 6px; transition: color .2s; }
+    .nav-back:hover { color: var(--text); text-decoration: none; }
+
+    .legal-hero {
+      background: linear-gradient(180deg, var(--bg2) 0%, var(--bg) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 56px 24px 40px;
+      text-align: center;
+    }
+    .legal-hero .eyebrow {
+      display: inline-block;
+      font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--amber); margin-bottom: 14px;
+    }
+    .legal-hero h1 { font-size: clamp(28px, 5vw, 42px); font-weight: 800; margin-bottom: 12px; }
+    .legal-hero .meta { font-size: 14px; color: var(--text3); }
+
+    .legal-wrap { max-width: 800px; margin: 0 auto; padding: 56px 24px 80px; }
+
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin-bottom: 48px;
+    }
+    .toc h2 { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text3); margin-bottom: 14px; }
+    .toc ol { padding-left: 20px; }
+    .toc li { font-size: 14px; margin-bottom: 6px; }
+    .toc li a { color: var(--accent3); }
+
+    .legal-section { margin-bottom: 48px; }
+    .legal-section h2 {
+      font-size: 20px; font-weight: 700; margin-bottom: 16px;
+      padding-bottom: 10px; border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    .legal-section h3 { font-size: 16px; font-weight: 600; color: var(--text2); margin: 20px 0 8px; }
+    .legal-section p { font-size: 15px; color: var(--text2); margin-bottom: 14px; }
+    .legal-section ul, .legal-section ol { padding-left: 24px; margin-bottom: 14px; }
+    .legal-section li { font-size: 15px; color: var(--text2); margin-bottom: 6px; }
+    .legal-section strong { color: var(--text); }
+
+    /* Highlight box */
+    .policy-highlight {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-left: 4px solid var(--amber);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin-bottom: 48px;
+    }
+    .policy-highlight h2 {
+      font-size: 17px; font-weight: 700; color: var(--amber);
+      margin-bottom: 12px;
+    }
+    .policy-highlight p { font-size: 15px; color: var(--text2); margin-bottom: 10px; }
+    .policy-highlight p:last-child { margin-bottom: 0; }
+
+    .callout-info {
+      background: rgba(124,92,252,.08);
+      border: 1px solid rgba(124,92,252,.25);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin: 20px 0;
+    }
+    .callout-info p { margin: 0; font-size: 14px; color: var(--accent3); }
+
+    .timeline {
+      position: relative;
+      padding-left: 28px;
+      margin: 20px 0;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute; left: 8px; top: 8px; bottom: 8px;
+      width: 2px; background: var(--border2);
+    }
+    .timeline-step { position: relative; margin-bottom: 20px; }
+    .timeline-step::before {
+      content: '';
+      position: absolute; left: -24px; top: 5px;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent2);
+      border: 2px solid var(--bg);
+    }
+    .timeline-step strong { display: block; font-size: 14px; color: var(--text); margin-bottom: 4px; }
+    .timeline-step p { font-size: 14px; color: var(--text2); margin: 0; }
+
+    footer {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+    }
+    .footer-links { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; }
+    .footer-links a { font-size: 13px; color: var(--text3); transition: color .2s; }
+    .footer-links a:hover { color: var(--text); text-decoration: none; }
+    .footer-copy { font-size: 13px; color: var(--text3); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="logo">
+      <img src="/logo.png" alt="FlowLane" width="30" height="30" />
+      FlowLane
+    </a>
+    <a href="/" class="nav-back">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M5 12l7-7M5 12l7 7"/></svg>
+      Back to home
+    </a>
+  </div>
+</nav>
+
+<div class="legal-hero">
+  <span class="eyebrow">Legal</span>
+  <h1>Refund Policy</h1>
+  <p class="meta">Last updated: 23 March 2026 &nbsp;·&nbsp; Effective: 23 March 2026</p>
+</div>
+
+<div class="legal-wrap">
+
+  <!-- Summary highlight -->
+  <div class="policy-highlight">
+    <h2>Policy Summary</h2>
+    <p><strong>FlowLane does not issue refunds</strong> for subscription fees, whether for monthly or annual plans. All purchases are final.</p>
+    <p>When you cancel, your <strong>Premium access continues until the end of your current paid billing period</strong>. After that date, your account automatically transitions to the Free Tier — no action required on your part.</p>
+    <p>You will never be charged again after cancellation, and your data is preserved so you can export it at any time.</p>
+  </div>
+
+  <div class="toc">
+    <h2>Table of Contents</h2>
+    <ol>
+      <li><a href="#no-refunds">No-Refund Policy</a></li>
+      <li><a href="#how-cancellation-works">How Cancellation Works</a></li>
+      <li><a href="#downgrade">Automatic Downgrade to Free Tier</a></li>
+      <li><a href="#data-on-downgrade">Your Data After Downgrade</a></li>
+      <li><a href="#failed-payments">Failed Payments</a></li>
+      <li><a href="#exceptions">Exceptional Circumstances</a></li>
+      <li><a href="#contact">Contact &amp; Disputes</a></li>
+    </ol>
+  </div>
+
+  <!-- 1 -->
+  <div class="legal-section" id="no-refunds">
+    <h2>1. No-Refund Policy</h2>
+    <p>By subscribing to FlowLane Premium, you acknowledge and agree that <strong>all subscription fees are non-refundable</strong>. This applies to:</p>
+    <ul>
+      <li>Monthly subscriptions — the current month's fee.</li>
+      <li>Annual subscriptions — the full annual fee, including any unused months remaining.</li>
+      <li>Any promotional or discounted pricing.</li>
+    </ul>
+    <p>We do not offer pro-rated refunds, partial refunds, or credits for unused subscription time under any standard circumstances.</p>
+    <p>Please evaluate FlowLane using the <strong>Free Tier</strong> before subscribing. The Free Tier includes up to 3 projects with full Kanban functionality and carries no time limit, allowing you to fully assess the product at no cost.</p>
+
+    <div class="callout-info">
+      <p><strong>Tip:</strong> Try the Free Tier first — it's unlimited in duration and includes core Kanban features. Upgrade only when you're ready for cloud sync and collaboration.</p>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="legal-section" id="how-cancellation-works">
+    <h2>2. How Cancellation Works</h2>
+    <p>You can cancel your subscription at any time with no cancellation fee. To cancel:</p>
+    <ol>
+      <li>Open FlowLane (extension or web app).</li>
+      <li>Go to <strong>Settings → Billing → Manage Subscription</strong>.</li>
+      <li>Click <strong>Cancel Plan</strong> in the Paddle billing portal.</li>
+    </ol>
+    <p>Cancellation takes effect immediately in terms of preventing future charges. Your Premium access remains active for the <strong>full remainder of your current billing period</strong>.</p>
+    <p>There is no minimum subscription period — you may cancel at any time after subscribing, including on the same day.</p>
+  </div>
+
+  <!-- 3 -->
+  <div class="legal-section" id="downgrade">
+    <h2>3. Automatic Downgrade to Free Tier</h2>
+    <p>When your paid billing period ends after cancellation, FlowLane automatically downgrades your account to the Free Tier. Here is what happens at each stage:</p>
+
+    <div class="timeline">
+      <div class="timeline-step">
+        <strong>You cancel your subscription</strong>
+        <p>No more charges. Your Premium access continues uninterrupted until the end of the period you already paid for.</p>
+      </div>
+      <div class="timeline-step">
+        <strong>End of paid billing period</strong>
+        <p>FlowLane detects the subscription expiry via Paddle webhook and begins the downgrade process.</p>
+      </div>
+      <div class="timeline-step">
+        <strong>Downgrade prompt shown</strong>
+        <p>A modal is displayed giving you the option to export your data (JSON or CSV) or renew Premium before the downgrade is finalised.</p>
+      </div>
+      <div class="timeline-step">
+        <strong>Free Tier activated</strong>
+        <p>Your account switches to the Free Tier. You retain access to up to 3 projects stored locally. Cloud-only projects remain in Firestore for a grace period, allowing export.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="legal-section" id="data-on-downgrade">
+    <h2>4. Your Data After Downgrade</h2>
+    <p>We handle your data carefully during a downgrade:</p>
+    <ul>
+      <li><strong>No immediate deletion:</strong> Your board data is not automatically deleted when you downgrade.</li>
+      <li><strong>Export window:</strong> The downgrade modal provides direct access to export all your data as JSON or CSV before or after the transition.</li>
+      <li><strong>Local storage:</strong> On the Free Tier, you can continue using up to 3 projects stored in your browser's local storage.</li>
+      <li><strong>Cloud data grace period:</strong> Firestore data associated with your account is retained for a reasonable period after downgrade to allow export.</li>
+    </ul>
+    <p>We strongly recommend exporting your data before your subscription expires if you have more than 3 projects or rely on cloud sync.</p>
+  </div>
+
+  <!-- 5 -->
+  <div class="legal-section" id="failed-payments">
+    <h2>5. Failed Payments</h2>
+    <p>If a payment fails (e.g. an expired card), Paddle will attempt to retry the charge according to its standard retry schedule. During this period, your Premium access may be temporarily suspended.</p>
+    <p>If payment is not recovered, your subscription will be cancelled and your account downgraded to the Free Tier as described above. <strong>No refund or credit is issued for any period of suspended access resulting from a failed payment.</strong></p>
+    <p>To avoid interruptions, keep your payment details up to date via the billing portal (<strong>Settings → Billing → Manage Subscription</strong>).</p>
+  </div>
+
+  <!-- 6 -->
+  <div class="legal-section" id="exceptions">
+    <h2>6. Exceptional Circumstances</h2>
+    <p>While our standard policy is no refunds, we may, at our sole discretion, consider exceptions in cases of:</p>
+    <ul>
+      <li>A verified technical failure caused by us that prevented you from accessing the Service for a materially significant period.</li>
+      <li>Duplicate charges resulting from a billing error on our part.</li>
+      <li>Jurisdictions where consumer protection law mandates a statutory cooling-off or refund period that cannot be contractually waived.</li>
+    </ul>
+    <p>Requests under this section must be submitted to <a href="mailto:support@flowlanekanban.com">support@flowlanekanban.com</a> within <strong>14 days</strong> of the charge in question, with a description of the issue. We will review each request individually. Approval of one exception does not create an obligation to approve future requests.</p>
+    <p>FlowLane is not responsible for, and no refunds will be issued due to, issues caused by your browser, device, operating system, internet connection, or third-party services (Google, Paddle, etc.).</p>
+  </div>
+
+  <!-- 7 -->
+  <div class="legal-section" id="contact">
+    <h2>7. Contact &amp; Disputes</h2>
+    <p>If you have a billing question or believe you have been charged in error, please contact us before initiating a chargeback with your bank or card provider. Chargebacks initiated without prior contact may result in account suspension.</p>
+    <ul>
+      <li><strong>Company:</strong> ArystoTech Software &amp; AI Systems Ltd.</li>
+      <li><strong>Email:</strong> <a href="mailto:support@flowlanekanban.com">support@flowlanekanban.com</a></li>
+      <li><strong>Website:</strong> <a href="https://flowlanekanban.com">flowlanekanban.com</a></li>
+    </ul>
+    <p>Paddle.com Market Limited is the Merchant of Record for all FlowLane transactions. Billing receipts, tax invoices, and payment disputes are handled through Paddle's support channels where applicable.</p>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/privacy/">Privacy Policy</a>
+    <a href="/terms/">Terms &amp; Conditions</a>
+    <a href="/refund-policy/">Refund Policy</a>
+    <a href="mailto:support@flowlanekanban.com">Support</a>
+  </div>
+  <p class="footer-copy">&copy; 2026 FlowLane — ArystoTech Software &amp; AI Systems Ltd. All rights reserved.</p>
+</footer>
+
+</body>
+</html>

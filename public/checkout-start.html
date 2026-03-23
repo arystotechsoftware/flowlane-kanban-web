@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>FlowLane Premium Checkout</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d1018;
+      --panel: #181d29;
+      --panel-2: #202737;
+      --text: #eef2ff;
+      --muted: #9aa6c7;
+      --accent: #7c6cff;
+      --accent-2: #5ef0c5;
+      --border: rgba(255, 255, 255, 0.08);
+      --danger: #ff7b7b;
+      --success: #34d399;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(124, 108, 255, 0.22), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(94, 240, 197, 0.12), transparent 28%),
+        var(--bg);
+      color: var(--text);
+    }
+
+    .shell {
+      width: min(1080px, 100%);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) minmax(320px, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+      padding: 28px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-2);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(30px, 5vw, 42px);
+      line-height: 1.04;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .plan-name {
+      margin-top: 18px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent-2);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .price {
+      margin-top: 6px;
+      font-size: clamp(42px, 8vw, 58px);
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .price span {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--muted);
+      vertical-align: top;
+    }
+
+    .plan-copy {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .feature-list {
+      list-style: none;
+      margin: 22px 0 0;
+      padding: 0;
+      display: grid;
+      gap: 12px;
+    }
+
+    .feature-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .feature-list svg {
+      flex-shrink: 0;
+      color: var(--success);
+    }
+
+    .auth-panel h2 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .auth-panel p.lead {
+      margin-top: 10px;
+    }
+
+    .notice {
+      margin-top: 20px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .notice.error {
+      border-color: rgba(255, 123, 123, 0.3);
+      color: #ffd0d0;
+    }
+
+    .notice.success {
+      border-color: rgba(52, 211, 153, 0.3);
+      color: #d2ffef;
+    }
+
+    .auth-actions {
+      display: grid;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .btn,
+    .link-btn,
+    .ghost-link {
+      appearance: none;
+      border: 0;
+      border-radius: 14px;
+      padding: 14px 16px;
+      font: inherit;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .btn:hover,
+    .link-btn:hover,
+    .ghost-link:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.7;
+      cursor: wait;
+      transform: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #5a48e6);
+      color: #fff;
+      box-shadow: 0 12px 28px rgba(124, 108, 255, 0.28);
+      font-weight: 700;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 22px 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .mode-toggle {
+      display: inline-flex;
+      gap: 6px;
+      padding: 6px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .mode-btn {
+      appearance: none;
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .mode-btn.active {
+      background: rgba(124, 108, 255, 0.16);
+      color: var(--text);
+    }
+
+    form {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px 14px;
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text);
+      font: inherit;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .ghost-link {
+      padding: 0;
+      background: transparent;
+      color: var(--accent-2);
+    }
+
+    .support-copy {
+      margin-top: 22px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .support-copy a {
+      color: var(--accent-2);
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      display: inline-block;
+      animation: spin 1s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 900px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="card">
+      <div class="eyebrow">FlowLane Billing</div>
+      <h1>Continue to secure checkout</h1>
+      <p>Sign in once, then we will open Paddle checkout for the Premium plan you selected.</p>
+
+      <div class="plan-name" id="planName">Premium Monthly</div>
+      <div class="price" id="planPrice"><span>$</span>3.99</div>
+      <p class="plan-copy" id="planCopy">Monthly billing. Cancel anytime.</p>
+
+      <ul class="feature-list">
+        <li>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Unlimited projects, cards, and columns
+        </li>
+        <li>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Cloud sync across devices and web app access
+        </li>
+        <li>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Real-time collaboration and priority support
+        </li>
+      </ul>
+    </section>
+
+    <section class="card auth-panel">
+      <div class="eyebrow">Secure Sign-In</div>
+      <h2 id="panelTitle">Sign in to continue</h2>
+      <p class="lead" id="panelLead">We link your Paddle purchase to your FlowLane account before checkout opens.</p>
+
+      <div id="statusBox" class="notice" hidden></div>
+
+      <div id="signedOutView">
+        <div class="auth-actions">
+          <button id="googleSignInBtn" class="btn btn-primary" type="button">Continue with Google</button>
+          <button id="githubSignInBtn" class="btn btn-outline" type="button">Continue with GitHub</button>
+        </div>
+
+        <div class="divider">or use email</div>
+
+        <div class="mode-toggle" role="tablist" aria-label="Email authentication mode">
+          <button id="signinModeBtn" class="mode-btn active" type="button">Sign In</button>
+          <button id="registerModeBtn" class="mode-btn" type="button">Create Account</button>
+        </div>
+
+        <form id="emailAuthForm">
+          <label>
+            Email
+            <input id="emailInput" type="email" autocomplete="email" required />
+          </label>
+          <label>
+            Password
+            <input id="passwordInput" type="password" autocomplete="current-password" minlength="6" required />
+          </label>
+          <button id="emailSubmitBtn" class="btn btn-primary" type="submit">Sign In with Email</button>
+        </form>
+
+        <div class="row">
+          <button id="resetPasswordBtn" class="ghost-link" type="button">Forgot password?</button>
+          <a class="ghost-link" href="/">Return to FlowLane site</a>
+          <a class="ghost-link" href="https://app.flowlanekanban.com">Open Web App</a>
+        </div>
+      </div>
+
+      <div id="signedInView" hidden>
+        <div class="notice success" id="signedInSummary"></div>
+        <div class="auth-actions">
+          <button id="continueCheckoutBtn" class="btn btn-primary" type="button">Continue to Paddle Checkout</button>
+          <button id="switchAccountBtn" class="btn btn-outline" type="button">Use Another Account</button>
+        </div>
+      </div>
+
+      <p class="support-copy">
+        FlowLane is a product of ArystoTech Software &amp; AI Systems Ltd.<br />
+        Support: <a href="mailto:support@flowlanekanban.com">support@flowlanekanban.com</a>
+      </p>
+    </section>
+  </main>
+
+  <script type="module" src="./checkout-start.js"></script>
+</body>
+</html>

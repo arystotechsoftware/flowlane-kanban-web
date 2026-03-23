@@ -1121,7 +1121,7 @@
           </li>
         </ul>
         <div class="price-actions">
-          <a href="https://app.flowlanekanban.com/?intent=subscribe&amp;plan=monthly" id="premiumCheckoutBtn" class="price-btn btn-primary" style="display:block;text-align:center;border-radius:10px;">Get Premium</a>
+          <a href="/checkout-start.html?plan=monthly" id="premiumCheckoutBtn" class="price-btn btn-primary" style="display:block;text-align:center;border-radius:10px;">Get Premium</a>
           <a href="https://app.flowlanekanban.com" id="openWebAppBtn" class="price-btn btn-outline" style="border:1px solid var(--border2);color:var(--text);display:block;text-align:center;border-radius:10px;">Open Web App</a>
         </div>
         <div class="price-subnote">Buy Premium from the extension or continue in the web app.</div>
@@ -1301,7 +1301,7 @@
         </a>
         <p>Personal Kanban that lives in your browser. Organize your work, collaborate in real time, and stay in flow.</p>
         <div class="footer-company">
-          FlowLane is a product of ArystoTech Software &amp; AI Services Ltd.<br />
+          FlowLane is a product of ArystoTech Software &amp; AI Systems Ltd.<br />
           Support: <a href="mailto:support@flowlanekanban.com">support@flowlanekanban.com</a>
         </div>
       </div>
@@ -1318,8 +1318,9 @@
           <h4>Support</h4>
           <a href="#faq">FAQ</a>
           <a href="mailto:support@flowlanekanban.com">support@flowlanekanban.com</a>
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
+          <a href="/privacy/">Privacy Policy</a>
+          <a href="/terms/">Terms &amp; Conditions</a>
+          <a href="/refund-policy/">Refund Policy</a>
         </div>
         <div class="footer-col">
           <h4>Install</h4>
@@ -1382,8 +1383,8 @@
   function updatePremiumCta() {
     if (!premiumCheckoutBtn) return;
     premiumCheckoutBtn.href = isAnnual
-      ? 'https://app.flowlanekanban.com/?intent=subscribe&plan=annual'
-      : 'https://app.flowlanekanban.com/?intent=subscribe&plan=monthly';
+      ? '/checkout-start.html?plan=annual'
+      : '/checkout-start.html?plan=monthly';
   }
 
   pricingSwitch.addEventListener('click', () => {

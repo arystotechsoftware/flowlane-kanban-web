@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terms &amp; Conditions — FlowLane</title>
+  <meta name="description" content="FlowLane Terms and Conditions of Service." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #0b0d14;
+      --bg2:      #111420;
+      --bg3:      #181c2e;
+      --surface:  #1e2235;
+      --border:   rgba(255,255,255,.07);
+      --border2:  rgba(255,255,255,.12);
+      --accent:   #7c5cfc;
+      --accent2:  #a78bfa;
+      --accent3:  #c4b5fd;
+      --text:     #f1f3ff;
+      --text2:    #9aa0c0;
+      --text3:    #5a6080;
+      --radius:   14px;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; overflow-x: hidden; }
+    a { color: var(--accent3); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--surface); border-radius: 99px; }
+
+    /* Nav */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(11,13,20,.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+    }
+    .nav-inner {
+      max-width: 1160px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; color: var(--text); }
+    .logo img { border-radius: 8px; }
+    .nav-back { font-size: 14px; color: var(--text2); display: flex; align-items: center; gap: 6px; transition: color .2s; }
+    .nav-back:hover { color: var(--text); text-decoration: none; }
+    .nav-back svg { flex-shrink: 0; }
+
+    /* Hero */
+    .legal-hero {
+      background: linear-gradient(180deg, var(--bg2) 0%, var(--bg) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 56px 24px 40px;
+      text-align: center;
+    }
+    .legal-hero .eyebrow {
+      display: inline-block;
+      font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--accent2); margin-bottom: 14px;
+    }
+    .legal-hero h1 { font-size: clamp(28px, 5vw, 42px); font-weight: 800; margin-bottom: 12px; }
+    .legal-hero .meta { font-size: 14px; color: var(--text3); }
+
+    /* Content */
+    .legal-wrap { max-width: 800px; margin: 0 auto; padding: 56px 24px 80px; }
+
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin-bottom: 48px;
+    }
+    .toc h2 { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text3); margin-bottom: 14px; }
+    .toc ol { padding-left: 20px; }
+    .toc li { font-size: 14px; color: var(--accent3); margin-bottom: 6px; }
+    .toc li a { color: var(--accent3); }
+
+    .legal-section { margin-bottom: 48px; }
+    .legal-section h2 {
+      font-size: 20px; font-weight: 700; margin-bottom: 16px;
+      padding-bottom: 10px; border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    .legal-section h3 { font-size: 16px; font-weight: 600; color: var(--text2); margin: 20px 0 8px; }
+    .legal-section p { font-size: 15px; color: var(--text2); margin-bottom: 14px; }
+    .legal-section ul, .legal-section ol { padding-left: 24px; margin-bottom: 14px; }
+    .legal-section li { font-size: 15px; color: var(--text2); margin-bottom: 6px; }
+    .legal-section strong { color: var(--text); }
+
+    .callout {
+      background: rgba(124,92,252,.08);
+      border: 1px solid rgba(124,92,252,.25);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin: 20px 0;
+    }
+    .callout p { margin: 0; font-size: 14px; color: var(--accent3); }
+
+    /* Footer */
+    footer {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+    }
+    .footer-links { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; }
+    .footer-links a { font-size: 13px; color: var(--text3); transition: color .2s; }
+    .footer-links a:hover { color: var(--text); text-decoration: none; }
+    .footer-copy { font-size: 13px; color: var(--text3); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="logo">
+      <img src="/logo.png" alt="FlowLane" width="30" height="30" />
+      FlowLane
+    </a>
+    <a href="/" class="nav-back">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M5 12l7-7M5 12l7 7"/></svg>
+      Back to home
+    </a>
+  </div>
+</nav>
+
+<div class="legal-hero">
+  <span class="eyebrow">Legal</span>
+  <h1>Terms &amp; Conditions</h1>
+  <p class="meta">Last updated: 23 March 2026 &nbsp;·&nbsp; Effective: 23 March 2026</p>
+</div>
+
+<div class="legal-wrap">
+
+  <div class="toc">
+    <h2>Table of Contents</h2>
+    <ol>
+      <li><a href="#acceptance">Acceptance of Terms</a></li>
+      <li><a href="#description">Description of Service</a></li>
+      <li><a href="#accounts">Accounts &amp; Registration</a></li>
+      <li><a href="#subscriptions">Subscriptions &amp; Billing</a></li>
+      <li><a href="#acceptable-use">Acceptable Use</a></li>
+      <li><a href="#intellectual-property">Intellectual Property</a></li>
+      <li><a href="#data">Your Data</a></li>
+      <li><a href="#disclaimer">Disclaimers &amp; Limitation of Liability</a></li>
+      <li><a href="#termination">Termination</a></li>
+      <li><a href="#changes">Changes to Terms</a></li>
+      <li><a href="#governing-law">Governing Law</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ol>
+  </div>
+
+  <!-- 1 -->
+  <div class="legal-section" id="acceptance">
+    <h2>1. Acceptance of Terms</h2>
+    <p>By installing, accessing, or using FlowLane (the "Service"), you agree to be bound by these Terms &amp; Conditions ("Terms"). If you do not agree, you must not use the Service.</p>
+    <p>The Service is operated by <strong>ArystoTech Software &amp; AI Systems Ltd.</strong> ("we", "us", or "our"). These Terms constitute a legally binding agreement between you and ArystoTech Software &amp; AI Systems Ltd.</p>
+    <p>You must be at least 13 years of age to use the Service. By using the Service you represent that you meet this age requirement.</p>
+  </div>
+
+  <!-- 2 -->
+  <div class="legal-section" id="description">
+    <h2>2. Description of Service</h2>
+    <p>FlowLane is a personal Kanban board available as a browser extension for Chrome, Microsoft Edge, Brave, and Vivaldi, and as a web application. The Service is offered under a freemium model:</p>
+    <ul>
+      <li><strong>Free Tier</strong> — Up to 3 projects stored locally in your browser using <code>chrome.storage.local</code>. No account or internet connection required for core functionality.</li>
+      <li><strong>Premium Tier</strong> — Unlimited projects, cloud sync via Firebase Firestore, real-time collaboration, and role-based access control. Requires a paid subscription processed through Paddle.</li>
+    </ul>
+    <p>We reserve the right to modify, suspend, or discontinue any part of the Service at any time with reasonable notice.</p>
+  </div>
+
+  <!-- 3 -->
+  <div class="legal-section" id="accounts">
+    <h2>3. Accounts &amp; Registration</h2>
+    <p>A user account is required only to access Premium Tier features. You may sign in using Google authentication via your browser's identity API, or GitHub OAuth. You are responsible for:</p>
+    <ul>
+      <li>Maintaining the confidentiality of your account credentials.</li>
+      <li>All activity that occurs under your account.</li>
+      <li>Notifying us immediately of any unauthorized use at <a href="mailto:support@flowlanekanban.com">support@flowlanekanban.com</a>.</li>
+    </ul>
+    <p>We reserve the right to suspend or terminate accounts that violate these Terms.</p>
+  </div>
+
+  <!-- 4 -->
+  <div class="legal-section" id="subscriptions">
+    <h2>4. Subscriptions &amp; Billing</h2>
+
+    <h3>4.1 Subscription Plans</h3>
+    <p>Premium access is billed on a monthly or annual basis at the rates displayed on the pricing page. Prices are in USD and do not include applicable taxes, which may be added at checkout.</p>
+
+    <h3>4.2 Billing via Paddle</h3>
+    <p>All payments are processed by <strong>Paddle.com Market Limited</strong> ("Paddle"), our Merchant of Record. By purchasing a subscription, you agree to Paddle's Terms of Service and Privacy Policy. Paddle handles payment processing, invoicing, and tax compliance on our behalf.</p>
+
+    <h3>4.3 Automatic Renewal</h3>
+    <p>Subscriptions renew automatically at the end of each billing period unless cancelled. You authorise us (via Paddle) to charge your payment method on a recurring basis until you cancel.</p>
+
+    <h3>4.4 Cancellation &amp; Expiry</h3>
+    <p>You may cancel your subscription at any time through the billing portal accessible from within the FlowLane extension or web app. Upon cancellation:</p>
+    <ul>
+      <li>Your Premium access remains active until the <strong>end of the current paid billing period</strong>.</li>
+      <li>After expiry, your account automatically downgrades to the Free Tier. No data is deleted immediately; your boards are preserved in Firestore and you may export them before or after downgrade.</li>
+      <li><strong>No partial-period refunds are issued.</strong> See our <a href="/refund-policy/">Refund Policy</a> for full details.</li>
+    </ul>
+
+    <div class="callout">
+      <p><strong>Note:</strong> We do not issue refunds for unused subscription time. When you cancel, you retain Premium access until your plan expires, then seamlessly continue on the Free Tier.</p>
+    </div>
+
+    <h3>4.5 Price Changes</h3>
+    <p>We may change subscription prices with at least 30 days' notice. Price changes take effect at your next renewal. Continued use after a price change constitutes acceptance of the new price.</p>
+
+    <h3>4.6 Failed Payments</h3>
+    <p>If a payment fails, Paddle will retry according to its standard dunning schedule. If payment remains outstanding, your subscription may be suspended and your account downgraded to the Free Tier.</p>
+  </div>
+
+  <!-- 5 -->
+  <div class="legal-section" id="acceptable-use">
+    <h2>5. Acceptable Use</h2>
+    <p>You agree not to use the Service to:</p>
+    <ul>
+      <li>Violate any applicable law or regulation.</li>
+      <li>Transmit any content that is unlawful, harmful, threatening, abusive, harassing, defamatory, or otherwise objectionable.</li>
+      <li>Attempt to gain unauthorised access to any part of the Service or its infrastructure.</li>
+      <li>Interfere with or disrupt the integrity or performance of the Service.</li>
+      <li>Reverse-engineer, decompile, or disassemble the Service except as permitted by applicable law.</li>
+      <li>Use the Service to store, share, or process sensitive personal data (e.g. financial account numbers, government IDs, health records) without appropriate safeguards.</li>
+      <li>Resell, sublicense, or commercially exploit the Service without our prior written consent.</li>
+    </ul>
+  </div>
+
+  <!-- 6 -->
+  <div class="legal-section" id="intellectual-property">
+    <h2>6. Intellectual Property</h2>
+    <p>The FlowLane name, logo, software, source code, and all associated content are the exclusive property of ArystoTech Software &amp; AI Systems Ltd. and are protected by copyright, trademark, and other intellectual-property laws.</p>
+    <p>We grant you a limited, non-exclusive, non-transferable, revocable licence to use the Service for your personal or internal business purposes in accordance with these Terms. No other rights are granted.</p>
+    <p>You retain ownership of all content and data you create within the Service ("Your Data"). By storing Your Data on our servers (Premium Tier), you grant us a limited licence to host, store, and transmit it solely for the purpose of providing the Service to you.</p>
+  </div>
+
+  <!-- 7 -->
+  <div class="legal-section" id="data">
+    <h2>7. Your Data</h2>
+    <p>Your data is yours. We will not sell, share, or use Your Data for advertising. Please review our <a href="/privacy/">Privacy Policy</a> for a full explanation of what data we collect, how we use it, and your rights.</p>
+    <p>You are responsible for maintaining backups of Your Data. The Service provides JSON and CSV export functionality for this purpose.</p>
+    <p>Upon account deletion, we will delete Your Data from our systems within a reasonable timeframe, except where retention is required by law.</p>
+  </div>
+
+  <!-- 8 -->
+  <div class="legal-section" id="disclaimer">
+    <h2>8. Disclaimers &amp; Limitation of Liability</h2>
+    <h3>8.1 Disclaimer of Warranties</h3>
+    <p>THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. WE DO NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, ERROR-FREE, OR FREE OF VIRUSES OR OTHER HARMFUL COMPONENTS.</p>
+
+    <h3>8.2 Limitation of Liability</h3>
+    <p>TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL ARYSTOTECH SOFTWARE &amp; AI SERVICES LTD., ITS DIRECTORS, EMPLOYEES, OR AGENTS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING LOSS OF PROFITS, DATA, OR GOODWILL, ARISING OUT OF OR IN CONNECTION WITH YOUR USE OF THE SERVICE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.</p>
+    <p>OUR TOTAL AGGREGATE LIABILITY TO YOU FOR ANY CLAIM ARISING OUT OF OR RELATING TO THESE TERMS OR THE SERVICE SHALL NOT EXCEED THE GREATER OF (A) THE TOTAL AMOUNT PAID BY YOU TO US IN THE TWELVE MONTHS PRECEDING THE CLAIM, OR (B) USD $50.</p>
+
+    <h3>8.3 Indemnification</h3>
+    <p>You agree to indemnify and hold harmless ArystoTech Software &amp; AI Systems Ltd. and its affiliates, officers, and employees from and against any claims, damages, losses, and expenses (including reasonable legal fees) arising from your violation of these Terms or your use of the Service.</p>
+  </div>
+
+  <!-- 9 -->
+  <div class="legal-section" id="termination">
+    <h2>9. Termination</h2>
+    <p>We may suspend or terminate your access to the Service immediately, without prior notice or liability, if you breach these Terms or for any other reason at our sole discretion.</p>
+    <p>You may stop using the Service and delete your account at any time. Upon termination, your right to use the Service ceases immediately. Sections 6, 7, 8, and 11 survive termination.</p>
+  </div>
+
+  <!-- 10 -->
+  <div class="legal-section" id="changes">
+    <h2>10. Changes to Terms</h2>
+    <p>We may update these Terms from time to time. When we do, we will update the "Last updated" date at the top of this page. For material changes, we will provide notice via the Service or by email (if you have an account with us).</p>
+    <p>Your continued use of the Service after changes are posted constitutes your acceptance of the revised Terms.</p>
+  </div>
+
+  <!-- 11 -->
+  <div class="legal-section" id="governing-law">
+    <h2>11. Governing Law &amp; Dispute Resolution</h2>
+    <p>These Terms are governed by and construed in accordance with applicable law. Any dispute arising out of or relating to these Terms shall first be attempted to be resolved through good-faith negotiation. If unresolved, disputes shall be submitted to binding arbitration or the competent courts of the jurisdiction in which ArystoTech Software &amp; AI Systems Ltd. is registered, as applicable.</p>
+    <p>If any provision of these Terms is found to be unenforceable, the remaining provisions will continue in full force and effect.</p>
+  </div>
+
+  <!-- 12 -->
+  <div class="legal-section" id="contact">
+    <h2>12. Contact</h2>
+    <p>If you have any questions about these Terms, please contact us:</p>
+    <ul>
+      <li><strong>Company:</strong> ArystoTech Software &amp; AI Systems Ltd.</li>
+      <li><strong>Email:</strong> <a href="mailto:support@flowlanekanban.com">support@flowlanekanban.com</a></li>
+      <li><strong>Website:</strong> <a href="https://flowlanekanban.com">flowlanekanban.com</a></li>
+    </ul>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/privacy/">Privacy Policy</a>
+    <a href="/terms/">Terms &amp; Conditions</a>
+    <a href="/refund-policy/">Refund Policy</a>
+    <a href="mailto:support@flowlanekanban.com">Support</a>
+  </div>
+  <p class="footer-copy">&copy; 2026 FlowLane — ArystoTech Software &amp; AI Systems Ltd. All rights reserved.</p>
+</footer>
+
+</body>
+</html>
